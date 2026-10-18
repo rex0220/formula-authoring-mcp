@@ -51,4 +51,5 @@
 - `records[].lines` は項目ごとの `before` → `after`（既定は変わった項目と印のある項目だけ）。`marks` の印: 副作用のある関数、イベントで変わる、再計算のたびに変わる、ユーザー情報・kintone の文脈に依る
 - `records[].errors` は式の評価の失敗（項目、段、文）。`failed: true` は実行時の sink が呼ばれた（走査の漏れ。結果を採らない）。どちらも findings に `calc.failed`
 - `contextLine` は計算の文脈（アプリ、ログインユーザー、mobile、イベント、ユーザー情報の出所）。`notice` はユーザー情報が架空（既定のテストデータ）であることなど
+- `records[].click`（`click` を付けたとき）はボタンのクリックの模擬: `display` = 押す前の表示（`TYPE` / `TITLE` / `HTML` / `ICON` / `SCAN` …）、`changes` = 押した後に変わる項目（`fieldcode` / `before` / `after`。計算式の無い項目も。`changesOmitted` は打ち切り）、`errors`（`phases` の `display` = 返り値がボタンでない、`click` = クリック時の式の失敗 = 実機はレコードを変えない）、`failed`（sink）。findings に `calc.click`。見た目・ダイアログの表示・change イベントは模擬しない（最後は利用者が実機で押す。try の章）
 - **既存のレコードは変わっていない（模擬）**。反映は設定画面で。設定を作った・変えたときは利用者に必ず伝える（説明だけの答えには付けない）

@@ -101,3 +101,50 @@ test("fml_try: 数値・テーブルの中・日付の値（型に入れた後�
     await s.close();
   }
 });
+
+test("fml_try: ボタンのクリックの模擬（click: true。MCP 0.3.0）。policy の承認が無ければ invalid、あれば押す前の表示と押した後に変わる項目を返す。作業フォルダーに何も書かない", { skip }, async () => {
+  const { mkdirSync, writeFileSync, rmSync } = await import("node:fs");
+  const path = await import("node:path");
+  const root = makeWorkspace();
+  const s = await connectClaudeCode([root]);
+  try {
+    const formulas = [
+      { formula: 'BUTTON("加算", FSET(数値1, NVL(数値1, 0) + 1), FSET(文字列1, "押した"))', click: true },
+      { formula: 'DIALOG(ARRAY("確認", "数値1 に 1 を足します", "question"), FSET(数値1, NVL(数値1, 0) + 1))', click: true },
+      { formula: "BUTTON(\"行を追加\", FSET_TADD(テーブル1, \"[{'T1_数値':'5'}]\"))", click: true },
+      { formula: "数値1 + 1", click: true }
+    ];
+    const no = sc(await s.call("fml_try", { workspaceId: root, formulas: formulas.slice(0, 1), records: [1] }));
+    assert.equal(no.status, "ok", JSON.stringify(no));
+    assert.equal(no.result.results[0].status, "invalid");
+    assert.ok(no.result.results[0].findings.some((f) => f.rule === "formula.side-effect" && f.level === "error"), "policy の承認が無ければ評価しない");
+    // 利用者が policy を書く（AI は書かない）
+    mkdirSync(path.join(root, "policy"));
+    writeFileSync(path.join(root, "policy", "authoring-policy.json"), JSON.stringify({ allowFunctions: ["BUTTON", "DIALOG", "FSET", "FSET_TADD"], allowMiscChanges: true }));
+    const before = readdirSync(root);
+    const r = sc(await s.call("fml_try", { workspaceId: root, formulas, records: [1, 2] }));
+    assert.equal(r.status, "ok", JSON.stringify(r));
+    const [btn, dialog, tadd, plain] = r.result.results;
+    assert.deepEqual([btn.status, btn.target], ["ok", { code: "(sp1)", type: "SPACER", elementId: "sp1" }], "as の省略はスペース項目");
+    assert.deepEqual(btn.values[0].click.display, { TYPE: "BUTTON", TITLE: "加算" });
+    assert.deepEqual(btn.values[0].click.changes.map((l) => [l.fieldcode, l.before, l.after]), [["数値1", "1234", "1235"], ["文字列1", "サンプル文字列 1", "押した"]]);
+    assert.deepEqual(btn.values[1].click.changes.map((l) => [l.fieldcode, l.after]), [["数値1", "1"], ["文字列1", "押した"]]);
+    assert.deepEqual([btn.values[0].click.errors, btn.values[0].click.failed], [[], false]);
+    assert.deepEqual(dialog.values[0].click.display, { TYPE: "DIALOG", TITLE: "確認", HTML: "数値1 に 1 を足します", ICON: "question", SCAN: true });
+    assert.deepEqual(dialog.values[0].click.changes.map((l) => [l.fieldcode, l.after]), [["数値1", "1235"]]);
+    const t = tadd.values[1].click.changes.find((l) => l.fieldcode === "テーブル1");
+    assert.deepEqual([t.before.length, t.after.length, t.after[1].value.T1_数値.value], [1, 2, "5"], "レコード 2 のテーブル1 は 1 行 → 2 行");
+    assert.equal(plain.status, "invalid");
+    assert.equal(plain.values[0].click.display, null);
+    assert.ok(plain.findings.some((f) => f.rule === "try.click"), "ボタンでない式は try.click");
+    assert.ok(r.findings.some((f) => f.rule === "try.invalid" && /^\[4\] try\.click/.test(f.message)));
+    assert.match(r.result.summary, /試し計算 4 式: ok 3、エラー 1/);
+    assert.deepEqual(readdirSync(root), before, "作業フォルダーに何も書かない");
+    const noClick = sc(await s.call("fml_try", { workspaceId: root, formulas: [{ formula: formulas[0].formula, as: "sp1" }], records: [1] }));
+    assert.equal(noClick.result.results[0].values[0].click, undefined, "click を付けなければ押さない");
+    assert.deepEqual(noClick.result.results[0].values[0].value, { TYPE: "BUTTON", TITLE: "加算" });
+  } finally {
+    await s.close();
+    rmSync(root, { recursive: true, force: true });
+  }
+});

@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { RECORD_TEXT, SKIP as skip, connEnv, connectClaudeCode, makeConn, makeWorkspace, saveInput, sc, settings } from "./helpers.mjs";
+import { RECORD_TEXT, SETTINGS_TEXT, SKIP as skip, connEnv, connectClaudeCode, makeConn, makeWorkspace, saveInput, sc, settings } from "./helpers.mjs";
 
 const sha = (file) => createHash("sha256").update(readFileSync(file)).digest("hex");
 const rowsJson = (...rows) => JSON.stringify(rows);
@@ -181,6 +181,47 @@ test("fml_calc: 接続のファイルの baseUrl がとても長くても（固�
   } finally {
     await s.close();
     conn.cleanup();
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("fml_calc: ボタンのクリックの模擬（click。MCP 0.3.0）: 計算後の実レコードで押し、押す前の表示と押した後に変わる項目（FSET_TADD の行、再計算）を返す。行が無い・ボタンでない式は invalid", { skip }, async () => {
+  const root = makeWorkspace();
+  mkdirSync(path.join(root, "records"));
+  writeFileSync(path.join(root, "records", "2305-7.json"), RECORD_TEXT);
+  mkdirSync(path.join(root, "policy"));
+  writeFileSync(path.join(root, "policy", "authoring-policy.json"), JSON.stringify({ allowFunctions: ["BUTTON", "FSET_TADD"], allowMiscChanges: true }));
+  const s = await connectClaudeCode([root]);
+  try {
+    // 2305 にはスペース項目が無いので、チェックボックス（商品セット）の行にボタンを置く（normalize は型を問わない。実機ではスペース項目かヘッダーに置く）
+    const base = JSON.parse(SETTINGS_TEXT);
+    const row = { ...base.pluginInfos[0], fieldcode: "商品セット", formulaSet: "BUTTON(\"行を追加\", FSET_TADD(テーブル, \"[{'商品':'追加','分類':'明細','数量':'1','単価':'10'}]\"))", rank: "" };
+    const saved = sc(await s.call("fml_save_settings", saveInput(root, "settings/button.json", settings({ pluginInfos: [...base.pluginInfos, row] }))));
+    assert.equal(saved.status, "ok", JSON.stringify(saved));
+    const calc = sc(await s.call("fml_calc", { workspaceId: root, path: "settings/button.json", records: [7], click: "商品セット" }));
+    assert.equal(calc.status, "ok", JSON.stringify(calc));
+    assert.equal(calc.result.click, "商品セット");
+    const r7 = calc.result.records[0];
+    assert.deepEqual([r7.click.display.TYPE, r7.click.display.TITLE, r7.click.failed], ["BUTTON", "行を追加", false]);
+    assert.deepEqual(r7.click.errors, []);
+    const table = r7.click.changes.find((l) => l.fieldcode === "テーブル");
+    assert.ok(table, JSON.stringify(r7.click.changes));
+    assert.equal(table.after.length, table.before.length + 1, "FSET_TADD で 1 行足される");
+    const added = table.after[table.after.length - 1].value;
+    assert.deepEqual([added.商品.value, added.金額.value], ["追加", "10"], "足した行の 金額 は再計算（数量 × 単価）で入る");
+    assert.ok(!calc.findings.some((f) => f.level === "error"), JSON.stringify(calc.findings));
+    assert.match(calc.result.note, /既存のレコードは変わっていない/);
+    const plain = sc(await s.call("fml_calc", { workspaceId: root, path: "settings/button.json", records: [7] }));
+    assert.equal(plain.result.records[0].click, undefined, "click を付けなければ押さない");
+    assert.equal(plain.result.click, undefined);
+    const notButton = sc(await s.call("fml_calc", { workspaceId: root, path: "settings/button.json", records: [7], click: "金額合計" }));
+    assert.deepEqual([notButton.status, notButton.error.code], ["invalid", "InputError"]);
+    assert.match(notButton.error.message, /BUTTON \/ DIALOG を使っていない/);
+    const noRow = sc(await s.call("fml_calc", { workspaceId: root, path: "settings/button.json", records: [7], click: "(sp1)" }));
+    assert.deepEqual([noRow.status, noRow.error.code], ["invalid", "InputError"]);
+    assert.ok(!s.stderr().includes("Unexpected token"));
+  } finally {
+    await s.close();
     rmSync(root, { recursive: true, force: true });
   }
 });

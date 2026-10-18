@@ -37,10 +37,21 @@
 
 使い分け: 関数の動きだけなら標本で十分。利用者の項目名・選択肢で式を組んでから試すなら `fields` + `data`、項目定義を取ってあるなら `app` + `data`。実際のレコードで確かめるのは `fml_record` → `fml_calc`。
 
+## ボタン（BUTTON / DIALOG）のクリック
+
+ボタンの式（patterns の「ボタン・イベント」）は、式に `click: true` を付けると押した模擬も返す。`as` の省略はスペース項目 `sp1`（実機でボタンを置く場所）。policy の承認（`allowFunctions` に BUTTON / DIALOG / FSET / FSET_TADD）が要る（AI は policy を書かない。無ければ `formula.side-effect` で invalid → 利用者に頼む）。
+
+- 手順は実機（デスクトップの buttonClick）と同じ: 押す前の表示（式の返り値）→ `EV_SET("click")` → 式（BUTTON / DIALOG が FSET / FSET_TADD を実行）→ 全項目の再計算 → 押す前のレコードとの差。レコードは写しで、kintone には何も送らない
+- `values[].click.display` は押す前の表示（BUTTON: `TYPE` / `TITLE` / `CSS` / `DETAIL` / `EDIT`、DIALOG: `TITLE` / `HTML` / `ICON` / `SCAN`（キャンセルの有無）/ `CSS`）。`values[].click.changes` は押した後に変わる項目（`fieldcode` / `before` / `after`。計算式の無い項目も。テーブルは行の配列で、FSET_TADD で足された行が見える）。`errors` の `phases`: `display` = 返り値がボタンでない、`click` = クリック時の式の失敗（実機はエラーのダイアログを出してレコードを変えない）、`top` / `table` / `2nd` = 再計算の失敗
+- 利用者の設定で確かめるなら `fml_calc` の `click`（ボタンの行の項目コード。スペース項目は `"(sp1)"` の形。計算後の実レコードで押す。`records[].click`）
+- 答えるときは、押す前の表示と「押すと どの項目が 何になるか」をレコードごとの表にして示す。**最後は利用者が実機のテスト用アプリの編集画面で押して確かめる**（保存せずに閉じれば元に戻る。本番では押さない）。模擬しないもの: ボタンの見た目・位置・CSS・ダイアログの表示・`record.set` の後の change イベント
+- 空の数値 + 1 は空のまま（constraints の空の扱い）なので、加算のボタンは `FSET(数値1, NVL(数値1, 0) + 1)`
+
 ## 答えるときに
 
 - 「サンプルアプリでの模擬」であることと、値（空のときの値、端の値）を添える。利用者のアプリの項目・選択肢・レコードとは違う。利用者の設定を確かめるのは `fml_calc`
 - 使用例を書くときは、資料の例（patterns の ✔、function-list の `ex:`）か `fml_try` で通った式を書く。通らなかった式（`formula.syntax`、`formula.unknown-function`）はそのまま答えに使わない
 - 複数の書き方で迷うときは、まとめて 1 回の `fml_try`（10 式まで）で比べる
 - スペース項目（HTML の表示。patterns の「スペース項目」）は標本の `sp1` を対象にできる（`as: "sp1"` か `"SPACER"`）。レコードに値が無いので、式の返り値（`ARRAY(ラベル, 書式, 値, 書式)` の配列や HTML）をそのまま返す。表示の確かめは実機で
+- ボタン（BUTTON / DIALOG）の式は `click: true` で押した模擬も返す（下の「ボタンのクリック」）
 - 利用者の項目名や選択肢で確かめたときは、それが架空の項目・値であること（`app` なら項目定義は実機、値は架空）を添える

@@ -2,6 +2,13 @@
 
 formula MCP（Claude Desktop の拡張機能「計算式 設定オーサリング（Formula）」と、Claude Code のプラグイン `formula`）の、利用者に見える変更です。新しい版が上です。
 
+## 0.3.0（未公開）
+
+中核は `@rex0220/formula-authoring-tools` 0.4.0。ボタンのクリックの模擬（テンプレート formula-authoring の計画 26 章）。
+
+- `fml_calc` に `click`（ボタン（BUTTON / DIALOG）の行の項目コード）: 計算の後に押した模擬を `records[].click` に返す（`display` = 押す前の表示、`changes` = 押した後に変わる項目。計算式の無い項目も）。`fml_try` の式に `click: true`（`as` の省略はスペース項目 `sp1`。`values[].click`）。手順は実機のデスクトップの処理と同じ（押す前の表示 → EV_SET("click") → 式 → 全項目の再計算）で、レコードは写し。policy の承認は今までどおり要る。見た目・ダイアログの表示・change イベントは模擬しない
+- 資料: 計算パターン集の「ボタン・イベント」に 3 例（BUTTON + FSET、DIALOG + FSET、BUTTON + FSET_TADD）と検証（47 ケース 128 式）、AI作業手順に「ボタンの確かめ方」（AI が押した後の表を示し、最後は利用者が実機のテスト用アプリで押す）。guide の try / results / constraints に同じ
+
 ## 0.2.6（2026-10-18）
 
 中核は 0.3.1。資料と手順の版（テンプレート formula-authoring 359fef2）。
