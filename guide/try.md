@@ -39,11 +39,12 @@
 
 ## ボタン（BUTTON / DIALOG）のクリック
 
-ボタンの式（patterns の「ボタン・イベント」）は、式に `click: true` を付けると押した模擬も返す。`as` の省略はスペース項目 `sp1`（実機でボタンを置く場所）。テンプレートの policy は BUTTON / DIALOG / FSET / FSET_TADD を既定で承認している（外してあれば `formula.side-effect` で invalid → 利用者に頼む。AI は policy を書かない）。
+ボタンの式（patterns の「ボタン・イベント」）は、式に `click: true` を付けると押した模擬も返す。`as` の省略はスペース項目 `sp1`（実機でボタンを置く場所）。ボタンはヘッダー（`($HEADER1)`〜`($HEADER3)`）かスペース項目（要素 ID を付けたスペース）に置くもので、押したときの動きはどちらも同じなので、**ヘッダーに置くボタンも `fml_try` では `as` を省いて（sp1 で）試す**（`as` はヘッダーの行を受け付けない）。表示する画面は既定が追加・編集の画面で、`BOPT("DETAIL", "Y")` で詳細画面にも、`BOPT("EDIT", "N")` で追加・編集の画面に出さない（function-list の BUTTON / DIALOG）。テンプレートの policy は BUTTON / DIALOG / FSET / FSET_TADD を既定で承認している（外してあれば `formula.side-effect` で invalid → 利用者に頼む。AI は policy を書かない）。
 
 - 手順は実機（デスクトップの buttonClick）と同じ: 押す前の表示（式の返り値）→ `EV_SET("click")` → 式（BUTTON / DIALOG が FSET / FSET_TADD を実行）→ 全項目の再計算 → 押す前のレコードとの差。レコードは写しで、kintone には何も送らない
 - `values[].click.display` は押す前の表示（BUTTON: `TYPE` / `TITLE` / `CSS` / `DETAIL` / `EDIT`、DIALOG: `TITLE` / `HTML` / `ICON` / `SCAN`（キャンセルの有無）/ `CSS`）。`values[].click.changes` は押した後に変わる項目（`fieldcode` / `before` / `after`。計算式の無い項目も。テーブルは行の配列で、FSET_TADD で足された行が見える）。`errors` の `phases`: `display` = 返り値がボタンでない、`click` = クリック時の式の失敗（実機はエラーのダイアログを出してレコードを変えない）、`top` / `table` / `2nd` = 再計算の失敗
-- 利用者の設定で確かめるなら `fml_calc` の `click`（ボタンの行の項目コード。スペース項目は `"(sp1)"` の形。計算後の実レコードで押す。`records[].click`）
+- 利用者の設定で確かめるなら `fml_calc` の `click`（ボタンの行の項目コード。スペース項目は `"(sp1)"` の形、ヘッダーの行は `"($HEADER1)"`〜`"($HEADER3)"`。`fml_fields` の最後の行に出る。計算後の実レコードで押す。`records[].click`）
+- テーブル自身に計算式がある（行数を自動で作る）テーブルは、`FSET(テーブル, "0")` で空にしても押した後の再計算で行が戻る。空にするのは利用者が入力するテーブル（集計のテーブルはその再計算で 0 になる）
 - 答えるときは、押す前の表示と「押すと どの項目が 何になるか」をレコードごとの表にして示す。**最後は利用者が実機のテスト用アプリの編集画面で押して確かめる**（保存せずに閉じれば元に戻る。本番では押さない）。模擬しないもの: ボタンの見た目・位置・CSS・ダイアログの表示・`record.set` の後の change イベント
 - 空の数値 + 1 は空のまま（constraints の空の扱い）なので、加算のボタンは `FSET(数値1, NVL(数値1, 0) + 1)`
 

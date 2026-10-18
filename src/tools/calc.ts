@@ -38,7 +38,7 @@ function cutValue(v: unknown): unknown {
 }
 const cutText = (s: string, max: number): string => (s.length > max ? `${s.slice(0, max)}…` : s);
 
-const NOTE = "既存のレコードは変わっていない（模擬）。反映は設定画面で取り込み → 保存 → 運用環境に反映。既存レコードは「既存レコードを変更」か「一括計算」で";
+const NOTE = "既存のレコードは変わっていない（模擬）。反映は設定画面で取り込み → 保存 → 運用環境に反映。値を計算する項目を変えたときは、既存レコードを「既存レコードを変更」か「一括計算」で（ボタン・表示だけの変更なら要らない）";
 
 interface RecordOut {
   id: string;

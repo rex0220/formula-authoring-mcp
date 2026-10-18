@@ -120,7 +120,7 @@ export function registerTry(server: McpServer, ctx: ServerContext): void {
                   formula: z.string().min(1).max(TRY_MAX_FORMULA_CHARS).describe("計算式（サンプルアプリの項目コードで。例 ROUND(数値1 / 3, 2)、SUM(T1_数値)、DATE_FORMAT(日付1, \"YYYY/MM/DD\")）"),
                   as: z.string().min(1).max(100).optional().describe("対象の型（NUMBER / TEXT / DATE / DATETIME / TIME / DROP_DOWN / RADIO_BUTTON / CHECK_BOX / MULTI_SELECT / USER_SELECT / ORGANIZATION_SELECT / GROUP_SELECT / LINK / RICH_TEXT / MULTI_LINE_TEXT）か項目コード。省略は TEXT（文字列 1 行。どの値も文字列で見える）。型のときは式が参照していない項目が対象になる。スペース項目（HTML の表示）は sp1 か SPACER（返り値をそのまま返す）"),
                   table: z.string().min(1).max(100).optional().describe("テーブルの中で計算する（行ごと）ときのテーブルのコード（テーブル1 / テーブル2）"),
-                  click: z.boolean().optional().describe("ボタン（BUTTON / DIALOG）の式を押した模擬も返す（values[].click: display = 押す前の表示、changes = 押した後に変わる項目）。as の省略はスペース項目 sp1。テンプレートの policy は BUTTON / DIALOG / FSET / FSET_TADD を既定で承認（外してあれば formula.side-effect → 利用者に頼む）。見た目・ダイアログの表示は模擬しない")
+                  click: z.boolean().optional().describe("ボタン（BUTTON / DIALOG）の式を押した模擬も返す（values[].click: display = 押す前の表示、changes = 押した後に変わる項目）。as の省略はスペース項目 sp1（ヘッダーに置くボタンも、押したときの動きは同じなので sp1 で試す）。テンプレートの policy は BUTTON / DIALOG / FSET / FSET_TADD を既定で承認（外してあれば formula.side-effect → 利用者に頼む）。見た目・ダイアログの表示は模擬しない")
                 })
                 .strict()
             )

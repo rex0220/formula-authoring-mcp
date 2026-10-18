@@ -40,9 +40,15 @@ test("fml_summary → fml_update_fields → fml_normalize（check）→ fml_calc
     const stale = sc(await s.call("fml_update_fields", { workspaceId: root, path: "settings/APP2305-テーブル内集計.json", expectedDigest: sum.digest, rows: rowsJson({ fieldcode: "金額合計", rank: 1 }) }));
     assert.deepEqual([stale.status, stale.error.code], ["conflict", "ConflictError"]);
     const unknown = sc(await s.call("fml_update_fields", { workspaceId: root, path: "settings/APP2305-テーブル内集計.json", expectedDigest: up.digest, rows: rowsJson({ fieldcode: "存在しない", rank: 1 }) }));
-    assert.deepEqual([unknown.status, unknown.error.code], ["invalid", "InputError"]);
+    assert.deepEqual([unknown.status, unknown.error.code], ["invalid", "NormalizeError"], "設定に無い行は足す行になり、アプリに無い項目は field.missing（MCP 0.3.2 から。それまでは InputError）");
+    assert.ok(unknown.findings.some((f) => f.rule === "field.missing"), JSON.stringify(unknown.findings));
     const notCommon = sc(await s.call("fml_update_fields", { workspaceId: root, path: "settings/APP2305-テーブル内集計.json", expectedDigest: up.digest, rows: rowsJson({ fieldcode: "金額合計", rank: 1 }), common: JSON.stringify({ pluginFoo: 1 }) }));
     assert.deepEqual([notCommon.status, notCommon.error.code], ["invalid", "InputError"], "共通の設定でないキー（COMMON_KEYS の外）");
+    // 設定に無い行を足す（ヘッダーの行。MCP 0.3.2）: 差分は added、ボタン・表示の行は ★ にしない
+    const addHeader = sc(await s.call("fml_update_fields", { workspaceId: root, path: "settings/APP2305-テーブル内集計.json", expectedDigest: up.digest, rows: rowsJson({ fieldcode: "($HEADER1)", formulaSet: '"合計 " & 金額合計' }) }));
+    assert.equal(addHeader.status, "ok", JSON.stringify(addHeader));
+    assert.deepEqual(addHeader.result.diff.fields.map((f) => [f.fieldcode, f.kind, f.affectsRecords, f.display]), [["($HEADER1)", "added", false, true]]);
+    up.digest = addHeader.digest;
     const badFormula = sc(await s.call("fml_update_fields", { workspaceId: root, path: "settings/APP2305-テーブル内集計.json", expectedDigest: up.digest, rows: rowsJson({ fieldcode: "金額合計", formulaSet: "不明な項目 + 1" }) }));
     assert.deepEqual([badFormula.status, badFormula.error.code], ["invalid", "NormalizeError"]);
     assert.equal(sha(file), up.digest, "invalid ではファイルを変えない");
