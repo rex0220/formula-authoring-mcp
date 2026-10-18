@@ -107,7 +107,7 @@ export function registerCalc(server: McpServer, ctx: ServerContext): void {
           nextStatus: z.string().max(200).optional().describe("プロセス管理の次のステータス（EV_INFO(\"nextStatus\")）"),
           mobile: z.boolean().optional().describe("モバイルの文脈で計算する"),
           all: z.boolean().optional().describe("変わらなかった項目の行も返す（既定は変わった項目と印のある項目だけ）"),
-          click: z.string().min(1).max(128).optional().describe("ボタン（BUTTON / DIALOG）の行の項目コード（スペース項目は \"(要素ID)\"。fml_summary で行を見る）。計算の後に押した模擬を records[].click に返す（display = 押す前の表示、changes = 押した後に変わる項目。policy の承認が要る。見た目・ダイアログの表示・change イベントは模擬しない）"),
+          click: z.string().min(1).max(128).optional().describe("ボタン（BUTTON / DIALOG）の行の項目コード（スペース項目は \"(要素ID)\"。fml_summary で行を見る）。計算の後に押した模擬を records[].click に返す（display = 押す前の表示、changes = 押した後に変わる項目。テンプレートの policy は既定で承認、外してあれば利用者に頼む。見た目・ダイアログの表示・change イベントは模擬しない）"),
           timeoutSec: timeoutSchema
         })
         .strict(),

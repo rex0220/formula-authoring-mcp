@@ -109,7 +109,7 @@ export function registerTry(server: McpServer, ctx: ServerContext): void {
         "関数の解説・使用例は資料（fml_docs）で答える。このツールを使うのは、利用者が動きの確認を求めたとき、資料に無い値や端の動き（空・範囲外・0 起点）を断言するとき、資料と自分の理解が食い違うとき。使うときは 10 式までまとめて 1 回（探索を続けない）。" +
         "as は型（NUMBER / TEXT（既定）/ DATE …）か項目コード、テーブルの中で計算するなら table。項目の一覧は describe: true。" +
         "fields で標本に項目（選択肢つき、テーブル）を足し、data で架空の値のレコードを作れる（利用者の項目コードや境界値で試す）。app で利用者のアプリの項目定義（fml_fields で取ったもの）に架空の値を当てる。利用者の設定を実際のレコードで確かめるのは fml_calc。" +
-        "ボタン（BUTTON / DIALOG）の式は click: true で押した模擬（押す前の表示と、押した後に変わる項目）も返す。policy の承認が要る。最後は利用者が実機のテスト用アプリで押して確かめる",
+        "ボタン（BUTTON / DIALOG）の式は click: true で押した模擬（押す前の表示と、押した後に変わる項目）も返す。テンプレートの policy は既定で承認（外してあれば利用者に頼む）。最後は利用者が実機のテスト用アプリで押して確かめる",
       inputSchema: z
         .object({
           workspaceId: workspaceIdSchema(ctx.surface),
@@ -120,7 +120,7 @@ export function registerTry(server: McpServer, ctx: ServerContext): void {
                   formula: z.string().min(1).max(TRY_MAX_FORMULA_CHARS).describe("計算式（サンプルアプリの項目コードで。例 ROUND(数値1 / 3, 2)、SUM(T1_数値)、DATE_FORMAT(日付1, \"YYYY/MM/DD\")）"),
                   as: z.string().min(1).max(100).optional().describe("対象の型（NUMBER / TEXT / DATE / DATETIME / TIME / DROP_DOWN / RADIO_BUTTON / CHECK_BOX / MULTI_SELECT / USER_SELECT / ORGANIZATION_SELECT / GROUP_SELECT / LINK / RICH_TEXT / MULTI_LINE_TEXT）か項目コード。省略は TEXT（文字列 1 行。どの値も文字列で見える）。型のときは式が参照していない項目が対象になる。スペース項目（HTML の表示）は sp1 か SPACER（返り値をそのまま返す）"),
                   table: z.string().min(1).max(100).optional().describe("テーブルの中で計算する（行ごと）ときのテーブルのコード（テーブル1 / テーブル2）"),
-                  click: z.boolean().optional().describe("ボタン（BUTTON / DIALOG）の式を押した模擬も返す（values[].click: display = 押す前の表示、changes = 押した後に変わる項目）。as の省略はスペース項目 sp1。policy の承認（BUTTON / DIALOG / FSET / FSET_TADD）が要る。見た目・ダイアログの表示は模擬しない")
+                  click: z.boolean().optional().describe("ボタン（BUTTON / DIALOG）の式を押した模擬も返す（values[].click: display = 押す前の表示、changes = 押した後に変わる項目）。as の省略はスペース項目 sp1。テンプレートの policy は BUTTON / DIALOG / FSET / FSET_TADD を既定で承認（外してあれば formula.side-effect → 利用者に頼む）。見た目・ダイアログの表示は模擬しない")
                 })
                 .strict()
             )

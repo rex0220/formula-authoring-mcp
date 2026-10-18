@@ -2,6 +2,13 @@
 
 formula MCP（Claude Desktop の拡張機能「計算式 設定オーサリング（Formula）」と、Claude Code のプラグイン `formula`）の、利用者に見える変更です。新しい版が上です。
 
+## 0.3.1（未公開）
+
+中核は 0.4.0 のまま。資料と手順の版（テンプレート formula-authoring 3309bdb）。
+
+- 資料: 計算パターン集の「ボタン・イベント」に「テーブルを空にする」（`DIALOG` + `FSET(テーブル, "0")`。行数は文字列の `"0"`、数の 0 は何もしない。条件で残すなら `TABLE_SORT` + `TPFILTER`）と「行を置き換える・行数を指定する」（`ARRAY("", "[…]")` / `FSET(テーブル, 2)`）。検証は 48 ケース 133 式。関数一覧の FSET にテーブルの value の書き方、FSET_TADD の使用例の訂正（計算式プラグイン Ver.101 のエンジンの直しに合わせた。`FSET(テーブル, 行数)` は Ver.101 より前の zip ではエラー）
+- policy: テンプレートの `policy/authoring-policy.json` の既定を BUTTON / DIALOG / FSET / FSET_TADD の承認に（ボタンの中で使う関数。評価は写しの上で kintone には書かない。CLIPBORD_WRITE は未承認のまま）。guide（try / results / constraints / howto-new）とツールの説明の文言を合わせた。既にある作業フォルダーの policy は変わらない（利用者が直す）
+
 ## 0.3.0（2026-10-18）
 
 中核は `@rex0220/formula-authoring-tools` 0.4.0。ボタンのクリックの模擬（テンプレート formula-authoring の計画 26 章）。

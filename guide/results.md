@@ -28,7 +28,7 @@
 | `rank.range` | ランクが整数（-10000〜10000）か `""` でない |
 | `formula.syntax` / `formula.unknown-function` / `formula.ref` | 評価できない（エンジンの文言を読む）/ 無い関数（function-list で名前を確かめる）/ 今のアプリに無い項目を参照 |
 | `formula.circular` | 自己参照か 2 項目の相互参照（各種設定 `circular_refer` が OFF のとき） |
-| `formula.side-effect` | 副作用のある関数（FSET / FSET_TADD / BUTTON / DIALOG / CLIPBORD_WRITE）。formula MCP は評価しない。要るなら利用者に policy の `allowFunctions` を頼む（AI は書かない） |
+| `formula.side-effect` | policy で承認していない副作用のある関数（テンプレートの既定は BUTTON / DIALOG / FSET / FSET_TADD を承認。CLIPBORD_WRITE は未承認）。formula MCP は評価しない。要るなら利用者に policy の `allowFunctions` を頼む（AI は書かない） |
 | `event.set` | EV_SET（テスト用）が設定に残っている |
 | `userinfo.off` | 各種設定「ユーザー情報」が OFF なのに UINFO 系を使う |
 | `views.missing` | 一覧別設定に今のアプリに無い一覧 ID |

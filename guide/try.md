@@ -18,7 +18,7 @@
 
 - `fml_try`（formulas: `[{ formula, as?, table? }]`、1 回 10 式まで）。式ごとに 1 行だけの設定を組んで normalize（検査）→ calc（模擬）。式ごとに独立（1 つの誤りがほかを止めない）
 - `as` は対象の型（`NUMBER` / `TEXT`（既定。文字列 1 行。どの値も文字列で見える）/ `DATE` / `DATETIME` / `TIME` / `DROP_DOWN` / `RADIO_BUTTON` / `CHECK_BOX` / `MULTI_SELECT` / `USER_SELECT` / `ORGANIZATION_SELECT` / `GROUP_SELECT` / `LINK` / `RICH_TEXT` / `MULTI_LINE_TEXT`）か項目コード。型のときは**式が参照していない項目**が対象になる（`数値1` を使う式なら `数値2`）。テーブルの中で計算する（行ごと）なら `table`（`テーブル1` / `テーブル2`）
-- `records` で絞る（既定は 3 件とも）。文脈は `fml_calc` と同じ（`event`、`user`、`users`、`mobile`。ユーザー情報は既定のテストデータ）。副作用のある関数は policy の承認が無ければ評価しない（AI は policy を書かない）
+- `records` で絞る（既定は 3 件とも）。文脈は `fml_calc` と同じ（`event`、`user`、`users`、`mobile`。ユーザー情報は既定のテストデータ）。副作用のある関数は policy で承認したものだけ評価する（テンプレートの既定は BUTTON / DIALOG / FSET / FSET_TADD。AI は policy を書かない）
 - 結果の `results[].values[]`: `value` は対象の型に入れた後の値（kintone に保存される形。数値も文字列）。`raw` はエンジンの生の値（`value` と違うときだけ。数値は数、日付は epoch 秒、配列は配列）。`error` は評価の失敗。`findings` はその式の検査のエラー・警告（results の章の表）。`marks` は印（ユーザー情報、イベント、再計算で変わる、kintone の文脈）
 - 対象を式が参照する（自己参照）と警告 `try.self-reference`: テーブルの外の項目は 1 段目と 2 段目の 2 回計算されるので値が 2 回分になる（実機と同じ）。`as` で式が使わない項目を選ぶ
 
@@ -39,7 +39,7 @@
 
 ## ボタン（BUTTON / DIALOG）のクリック
 
-ボタンの式（patterns の「ボタン・イベント」）は、式に `click: true` を付けると押した模擬も返す。`as` の省略はスペース項目 `sp1`（実機でボタンを置く場所）。policy の承認（`allowFunctions` に BUTTON / DIALOG / FSET / FSET_TADD）が要る（AI は policy を書かない。無ければ `formula.side-effect` で invalid → 利用者に頼む）。
+ボタンの式（patterns の「ボタン・イベント」）は、式に `click: true` を付けると押した模擬も返す。`as` の省略はスペース項目 `sp1`（実機でボタンを置く場所）。テンプレートの policy は BUTTON / DIALOG / FSET / FSET_TADD を既定で承認している（外してあれば `formula.side-effect` で invalid → 利用者に頼む。AI は policy を書かない）。
 
 - 手順は実機（デスクトップの buttonClick）と同じ: 押す前の表示（式の返り値）→ `EV_SET("click")` → 式（BUTTON / DIALOG が FSET / FSET_TADD を実行）→ 全項目の再計算 → 押す前のレコードとの差。レコードは写しで、kintone には何も送らない
 - `values[].click.display` は押す前の表示（BUTTON: `TYPE` / `TITLE` / `CSS` / `DETAIL` / `EDIT`、DIALOG: `TITLE` / `HTML` / `ICON` / `SCAN`（キャンセルの有無）/ `CSS`）。`values[].click.changes` は押した後に変わる項目（`fieldcode` / `before` / `after`。計算式の無い項目も。テーブルは行の配列で、FSET_TADD で足された行が見える）。`errors` の `phases`: `display` = 返り値がボタンでない、`click` = クリック時の式の失敗（実機はエラーのダイアログを出してレコードを変えない）、`top` / `table` / `2nd` = 再計算の失敗
