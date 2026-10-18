@@ -10,7 +10,7 @@ import type { EngineInterface, Register } from 'claude-code'
 type $ = EngineInterface
 
 /** 作業フォルダーを使うツール（① と ③）。末尾のツール名で捕まえる（サーバーの名前は mcp__plugin_formula_formula__） */
-const WORKSPACE_TOOL = /^mcp__.+__fml_(save_settings|workspace_status|update_fields|summary|normalize|calc|fields|record|users|pull|files|take|edit|diff)$/
+const WORKSPACE_TOOL = /^mcp__.+__fml_(save_settings|workspace_status|update_fields|summary|normalize|calc|try|fields|record|users|pull|files|take|edit|diff)$/
 
 /**
  * 登録した後の案内。設定（/config）を変えてもプラグインの MCP サーバーは起動し直さず、/mcp の再接続か

@@ -31,6 +31,7 @@ export const MANIFEST_TOOLS = [
   ["fml_summary", "設定の要約と digest（項目の計算式）"],
   ["fml_normalize", "設定の検査（書き換えない）"],
   ["fml_calc", "レコードに設定を当てた模擬の計算（更新しない）"],
+  ["fml_try", "同梱のサンプルアプリで式を試す（利用者のアプリは使わない）"],
   ["fml_fields", "kintone の項目定義を取る"],
   ["fml_record", "kintone のレコードを取る（形だけ返す）"],
   ["fml_users", "User API からユーザー情報のテストデータを取る（件数だけ返す）"],

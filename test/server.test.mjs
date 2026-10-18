@@ -8,7 +8,7 @@ import os from "node:os";
 import path from "node:path";
 import { FIELDS_TEXT, SECRET, SKIP as skip, VERSION, ZIP, connEnv, connect, connectClaudeCode, connectDesktop, leakedTokens, makeConn, makeWorkspace, saveInput, sc, settings } from "./helpers.mjs";
 
-export const TOOLS = ["fml_docs", "fml_status", "fml_workspace_status", "fml_save_settings", "fml_update_fields", "fml_summary", "fml_normalize", "fml_calc", "fml_fields", "fml_record", "fml_users", "fml_pull", "fml_files", "fml_take", "fml_edit", "fml_diff"];
+export const TOOLS = ["fml_docs", "fml_status", "fml_workspace_status", "fml_save_settings", "fml_update_fields", "fml_summary", "fml_normalize", "fml_calc", "fml_try", "fml_fields", "fml_record", "fml_users", "fml_pull", "fml_files", "fml_take", "fml_edit", "fml_diff"];
 
 test("ツールの一覧と入力の厳しいスキーマ（additionalProperties: false。Claude Code では workspaceId が必須）。指示の 1 行目に版。fml_status の capabilities", { skip }, async () => {
   const root = makeWorkspace();

@@ -51,6 +51,7 @@ export function indexText(): string {
     "- 新しい設定: fml_status → アプリの番号（利用者に聞く）→ fml_fields（アプリのフォルダー kintone/<profile>/<番号>-<アプリ名>/ ができる）→ 代表のレコードを fml_record → 仕様の確認（設計の前に利用者に聞く）→ 式を書く（patterns、sample-settings）→ fml_save_settings（アプリのフォルダーに）→ fml_calc → 反映方法。詳しくは howto-new",
     "- 既存の設定を直す: fml_pull か、設定のダウンロードを inbox/ に置いてもらい fml_take → fml_edit（-edit.json に写す）→ fml_summary（digest）→ fml_update_fields → fml_calc → fml_diff。詳しくは howto-edit",
     "- 利用者のやりたいことが短ければ、先に要件を作って確かめる（requirements）。計算式の解説は explain",
+    "- 関数の解説・使用例・式の断片は、答える前に fml_try（同梱のサンプルアプリで実際の計算式エンジンに計算させる。利用者のアプリ・レコードは使わない）で確かめる（try）",
     "",
     "決まり:",
     "- 状態（作業フォルダー、計算式プラグインの zip、kintone の接続）は、この文から推し量らず fml_status / fml_workspace_status で確かめる",

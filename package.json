@@ -1,6 +1,6 @@
 {
   "name": "@rex0220/formula-authoring-mcp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "formula MCP: kintone の計算式プラグイン（rex0220 formula）の設定 JSON を、検査（normalize）と模擬の計算（calc）を通して作業フォルダーに保存・確認する MCP サーバー（Claude Code のプラグインと Claude Desktop の .mcpb）。中核は @rex0220/formula-authoring-tools/core",
   "license": "MIT",
@@ -21,7 +21,7 @@
   "devDependencies": {
     "@modelcontextprotocol/client": "2.0.0",
     "@modelcontextprotocol/server": "2.0.0",
-    "@rex0220/formula-authoring-tools": "0.2.1",
+    "@rex0220/formula-authoring-tools": "0.3.0",
     "@types/node": "24.19.1",
     "esbuild": "0.28.2",
     "typescript": "7.0.2",

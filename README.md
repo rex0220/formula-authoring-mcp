@@ -24,6 +24,7 @@ kintone の計算式プラグイン（rex0220 formula。Ver.101 以降）の設�
 | `fml_summary` | 設定の要約（項目の一覧、ランク順 = 計算順）と digest。`field` で 1 項目の計算式の全文 |
 | `fml_normalize` | 検査だけ（書かない）。`check` で入力と出力の差 |
 | `fml_calc` | 取ったレコードに設定を当てた模擬の計算（項目ごとの前後の値。1 回 10 件まで。評価は Worker で時間上限付き。kintone は更新しない） |
+| `fml_try` | 同梱のサンプルアプリ（架空。全項目タイプ × 2、テーブル 2 つ、レコード 3 件）で式を試す（関数の解説・使用例・式の断片を実際の計算式エンジンで確かめる。利用者のアプリ・レコード・kintone は使わない）。`fields` で項目を足す、`data` で架空の値のレコード、`app` で利用者のアプリの項目定義（`fml_fields` で取ったもの）に架空の値 |
 | `fml_fields` / `fml_record` / `fml_users` / `fml_pull` | kintone から項目定義・レコード（形だけ返す）・ユーザー情報のテストデータ（件数だけ返す）・アプリの今の設定を取る（GET だけ） |
 | `fml_files` / `fml_take` / `fml_edit` / `fml_diff` | 作業フォルダーの一覧、`inbox/` のダウンロードをアプリのフォルダーへ、ダウンロードを `-edit.json` に写す、2 つの設定の差 |
 | `kintone_get_app` / `kintone_list_records` | Desktop だけ（Claude Code では公式の kintone MCP）。アプリの情報とレコードの形を数件 |
@@ -104,4 +105,4 @@ node scripts/sync-references.mjs   # テンプレートの資料を写し直す�
 
 ## 手で確かめること
 
-リリースの候補で、Claude Code（`claude --plugin-dir .` か marketplace）と Desktop（`.mcpb`）の両方で: `fml_status` が `ready`、テスト用アプリの `fml_fields` → `fml_record` → `fml_save_settings` → `fml_calc` の流れ、既存の設定の `fml_pull` → `fml_edit` → `fml_summary` → `fml_update_fields` → `fml_diff`、保存した設定が設定画面で取り込めること、`fml_calc` の値が「既存レコードを変更」の結果と一致すること、ログ（Desktop の `main.log`、Claude Code の標準エラー）に秘密の値とレコードの値が無いこと。結果は計画の 24 章（7-7）に書く。
+リリースの候補で、Claude Code（`claude --plugin-dir .` か marketplace）と Desktop（`.mcpb`）の両方で: `fml_status` が `ready`、テスト用アプリの `fml_fields` → `fml_record` → `fml_save_settings` → `fml_calc` の流れ、`fml_try`（関数の使用例をサンプルアプリで確かめる。`describe: true`）、既存の設定の `fml_pull` → `fml_edit` → `fml_summary` → `fml_update_fields` → `fml_diff`、保存した設定が設定画面で取り込めること、`fml_calc` の値が「既存レコードを変更」の結果と一致すること、ログ（Desktop の `main.log`、Claude Code の標準エラー）に秘密の値とレコードの値が無いこと。結果は計画の 24 章（7-7）に書く。
