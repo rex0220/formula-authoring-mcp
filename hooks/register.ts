@@ -9,8 +9,12 @@ import type { EngineInterface, Register } from 'claude-code'
 
 type $ = EngineInterface
 
-/** 作業フォルダーを使うツール（① と ③）。末尾のツール名で捕まえる（サーバーの名前は mcp__plugin_formula_formula__） */
-const WORKSPACE_TOOL = /^mcp__.+__fml_(save_settings|workspace_status|update_fields|summary|normalize|calc|try|fields|record|users|pull|files|take|edit|diff)$/
+/**
+ * 作業フォルダーを使うツール（① と ③）。このプラグインの MCP サーバー（mcp__plugin_formula_formula__）のものだけ。
+ * ほかのサーバーの同じ名前のツール（Desktop の Cowork で拡張機能 .mcpb の formula が一緒に見えるとき。作業フォルダーは拡張機能の設定で決まり、フックは要らない）は捕まえない
+ * （0.2.3 までは mcp__.+__ で捕まえ、拡張機能の fml_try まで「設定項目の行が見つからない」で止めていた。0.2.4）
+ */
+const WORKSPACE_TOOL = /^mcp__plugin_formula_formula__fml_(save_settings|workspace_status|update_fields|summary|normalize|calc|try|fields|record|users|pull|files|take|edit|diff)$/
 
 /**
  * 登録した後の案内。設定（/config）を変えてもプラグインの MCP サーバーは起動し直さず、/mcp の再接続か
@@ -127,7 +131,11 @@ export const register: Register = (on, options) => {
     // 登録先の行が無ければ、確認の画面を出す前に断る（利用者に選ばせてから断らない）。見つかった行の名前（値は出さない）を付ける
     if (row === undefined) {
       const keys = (await $.config.list()).map(r => r.key).filter(k => k.startsWith($.plugin.name))
-      return { deny: `formula: 設定項目 ${$.plugin.name}.workspaceRoots の行が見つからない（このプラグインの行: ${keys.join(', ') || '無し'}）` }
+      return {
+        deny:
+          `formula: このセッションのフォルダー（${session}）は登録済みの作業フォルダーの中でなく、登録先の設定項目 ${$.plugin.name}.workspaceRoots の行も見つからない（このプラグインの行: ${keys.join(', ') || '無し'}）。` +
+          'Claude Code では作業フォルダーで起動する。Desktop（Cowork）では拡張機能の formula（.mcpb）を使う'
+      }
     }
     // 未登録: 利用者本人に確認する（AI は答えられない。headless では拒否される）
     let dismissed = false

@@ -165,9 +165,20 @@ describe('4.1 workspaceId の書き換え', () => {
     })
     const r = await $.tool.call({ tool: MCP('fml_workspace_status'), workspaceId: '' } as any)
     expect(isDenied(r)).toBe(true)
-    expect(denyText(r)).toMatch(/行が見つからない/)
+    expect(denyText(r)).toMatch(/行も見つからない/)
+    expect(denyText(r)).toMatch(/拡張機能の formula/)
     expect(asked).toBe(false)
     expect(reached.length).toBe(0)
+  })
+
+  test('ほかのサーバーの同じ名前のツール（Desktop の拡張機能の fml_try など）は捕まえない（0.2.4）', async ($, on) => {
+    const reached = engine(on, { roots: [], noRow: true })
+    for (const tool of ['mcp__formula-authoring__fml_try', 'mcp__local_mcpb_rex0220_formula-authoring__fml_save_settings']) {
+      const r = await $.tool.call({ tool, workspaceId: '', formulas: [{ formula: '1' }] } as any)
+      expect(isDenied(r)).toBe(false)
+    }
+    expect(reached.length).toBe(2)
+    expect(reached[0]?.workspaceId).toBe('')
   })
 
   test('フックが失敗したら拒否する（fail-closed）', async ($, on) => {

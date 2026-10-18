@@ -1,6 +1,6 @@
 {
   "name": "formula",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "kintone の計算式プラグイン（rex0220 formula）の設定 JSON を、検査（normalize）と模擬の計算（calc）を通して作業フォルダーに保存・確認する（formula MCP と、作業フォルダーの結び付け・設定ファイルへの直接の書き込みを止めるフック）",
   "author": {
     "name": "rex0220"
