@@ -1,5 +1,5 @@
 // テンプレート（formula-authoring）の docs/ と samples/ を references/template/ に写す（print-craft MCP の実装案 3.2、5.5、8.2、12.4 と同じ考え。計画 24.3）。
-//   - 写すのは AI が読む資料だけ（計算パターン集、設定ファイル仕様、関数一覧、既定のテストデータ、封筒形式の雛形）。利用者向けの手順書（README、バージョンアップ手順）と
+//   - 写すのは AI が読む資料だけ（計算パターン集とその検証、設定ファイル仕様、関数一覧、既定のテストデータ、封筒形式の雛形）。利用者向けの手順書（README、バージョンアップ手順）と
 //     CLI の手順（AI作業手順.md。MCP では guide/ に fml_* 版を置く）は写さない
 //   - 写した元のコミットと、各ファイルの sha256・大きさを references/template/SOURCE.json に書く（build-mcp.mjs が照合する。手で二重に直さない）
 //   - 元の資料にコミットしていない変更があれば止める（--allow-dirty で写せるが、SOURCE.json に dirty と書く）
@@ -19,6 +19,7 @@ const outDir = path.join(root, "references", "template");
 
 export const FILES = [
   "docs/計算パターン.md",
+  "docs/計算パターン_検証.md",
   "docs/設定ファイル仕様.md",
   "docs/関数一覧.md",
   "docs/既定のテストデータ.md",

@@ -14,6 +14,7 @@ export const DOC_SECTIONS = [
   { key: "usable", title: "使えるもの（積極的に使ってよい関数・書き方）", guide: "usable.md" },
   { key: "connections", title: "kintone の接続とアプリのフォルダー（接続のファイル。profile、kintone/<profile>/<番号>-<アプリ名>/）", guide: "connections.md" },
   { key: "patterns", title: "計算パターン集（やりたいこと → 式の例 → 確かめること）", ref: "docs/計算パターン.md" },
+  { key: "patterns-verified", title: "計算パターンの検証（同梱のサンプルアプリと架空の値で評価した結果。✔ の例の根拠。大きい。query にパターン名）", ref: "docs/計算パターン_検証.md" },
   { key: "spec", title: "設定ファイル仕様（封筒、共通の設定、項目の行、上限）", ref: "docs/設定ファイル仕様.md" },
   { key: "function-list", title: "関数一覧（大きい。query に関数名）", ref: "docs/関数一覧.md" },
   { key: "test-users", title: "既定のテストデータ（架空のユーザー・組織・グループ）", ref: "docs/既定のテストデータ.md" },
