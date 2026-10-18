@@ -1,6 +1,6 @@
 # 使えるもの（積極的に使ってよい）
 
-- `LET(x, 式, …, 式)` で変数。`FSET(x, 値)` で LET の変数の値を変えられる（ループで積み上げる: `LET(s, "", t, ARRAY_FOR(3, i, FSET(s, s & i)), s)`）
+- `LET(a, 式a, b, 式b, …, 結果)` で変数（1 つの LET に並べる。入れ子にしない）。`FSET(x, 値)` で LET の変数の値を変えられる（ループで積み上げる: `LET(s, "", t, ARRAY_FOR(3, i, FSET(s, s & i)), s)`）
 - `REPLACEALL(項目, ARRAY(p1, r1, p2, r2, …))` / `REPLACERE(項目, ARRAY(…), "g")` で置換の組を配列で（入れ子を平らに）
 - 条件付き集計 `SUMIF` / `COUNTIF` / `LASTIF` / `FIRSTIF`、テーブルの行番号 `ROWNO(テーブル)`、空の既定 `NVL`
 - テーブルの集計 `TLTABLE(テーブル, TPKEY(キー), TPVAL(値), TPOUT(出力の列), TPSORT(並び))`（分類ごとの集計を別のテーブルに出す。patterns の章の集計）
