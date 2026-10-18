@@ -1,0 +1,39 @@
+{
+  "name": "formula",
+  "version": "0.1.0",
+  "description": "kintone の計算式プラグイン（rex0220 formula）の設定 JSON を、検査（normalize）と模擬の計算（calc）を通して作業フォルダーに保存・確認する（formula MCP と、作業フォルダーの結び付け・設定ファイルへの直接の書き込みを止めるフック）",
+  "author": {
+    "name": "rex0220"
+  },
+  "homepage": "https://github.com/rex0220/formula-authoring-mcp",
+  "repository": "https://github.com/rex0220/formula-authoring-mcp",
+  "license": "MIT",
+  "keywords": [
+    "kintone",
+    "formula",
+    "計算式プラグイン",
+    "mcp"
+  ],
+  "privacyPolicyUrl": "https://github.com/rex0220/formula-authoring-mcp/blob/main/PRIVACY.md",
+  "supportUrl": "https://github.com/rex0220/formula-authoring-mcp/issues",
+  "userConfig": {
+    "workspaceRoots": {
+      "type": "string",
+      "title": "計算式プラグインの作業フォルダー",
+      "description": "信頼する作業フォルダーの絶対パスの JSON の配列（初めて使うときに確認の画面から自動で足す）",
+      "required": false
+    },
+    "pluginZip": {
+      "type": "string",
+      "title": "計算式プラグインの zip",
+      "description": "アプリに入れた計算式プラグイン（Ver.101 以降）の zip の絶対パス（空なら作業フォルダーの .env の FORMULA_PLUGIN_ZIP）",
+      "required": false
+    },
+    "kintoneConfig": {
+      "type": "string",
+      "title": "kintone の接続のファイル",
+      "description": "kSQL の ksql.config.json と同じ形のファイルの絶対パス（作業フォルダーの外に置く。kSQL と同じファイルでもよい）。空なら kintone を使うツールは使えない",
+      "required": false
+    }
+  }
+}

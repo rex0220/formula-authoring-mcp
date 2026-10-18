@@ -1,0 +1,107 @@
+{
+  "date": "2026-10-17 00:00:00",
+  "pluginName": "計算式プラグイン",
+  "pluginID": "rex0220 formula plugin",
+  "PluginVersion": "101",
+  "appId": 2305,
+  "appName": "テーブル内集計",
+  "pluginEnable": true,
+  "pluginProductEnv": true,
+  "toolEnable": true,
+  "pluginComment": "",
+  "pluginDescription": "",
+  "pluginBtnInfo": {
+    "detail_btn": {
+      "state": false,
+      "default": "計算",
+      "ja": "",
+      "en": "",
+      "zh": ""
+    },
+    "list_btn": {
+      "state": false,
+      "default": "一括計算",
+      "ja": "",
+      "en": "",
+      "zh": ""
+    }
+  },
+  "pluginListInfo": {
+    "all_enabled": false,
+    "views": {}
+  },
+  "authority": {
+    "everyone": true,
+    "users": {},
+    "organizations": {},
+    "groups": {}
+  },
+  "pluginMiscInfo": {
+    "circular_refer": true,
+    "async": true,
+    "userInfo": false,
+    "calcStep1": true,
+    "calcTable": true,
+    "calcStep2": true,
+    "tableCalcSkip": false,
+    "eventCreateShow": true,
+    "eventEditShow": true,
+    "eventCreateChange": true,
+    "eventEditChange": true,
+    "eventCreateSubmit": true,
+    "eventEditSubmit": true,
+    "eventCreateSuccess": true,
+    "eventEditSuccess": true,
+    "eventProcess": true
+  },
+  "pluginInfos": [
+    {
+      "fieldcode": "金額合計",
+      "state": true,
+      "formulaSet": "SUMIF(分類=\"小計\",金額)",
+      "edit": false,
+      "hide": false,
+      "rank": ""
+    },
+    {
+      "fieldcode": "No",
+      "state": true,
+      "formulaSet": "ROWNO(テーブル)+1",
+      "edit": false,
+      "hide": false,
+      "rank": ""
+    },
+    {
+      "fieldcode": "商品",
+      "state": true,
+      "formulaSet": "LET(CNO,ROWNO(テーブル),\n  SWITCH(分類,\n//    \"概要\",商品,\n//    \"明細\",商品,\n    \"小計\",LET(PNO,NVL(LASTIF(AND(ROWNO(テーブル)<CNO,分類=\"小計\"),ROWNO(テーブル)),-1),\n      FIRSTIF(AND(ROWNO(テーブル)<CNO,ROWNO(テーブル)>PNO,分類=\"概要\"),商品)),\n    商品)\n)",
+      "edit": true,
+      "hide": false,
+      "rank": ""
+    },
+    {
+      "fieldcode": "数量",
+      "state": true,
+      "formulaSet": "IF(分類=\"明細\",数量,\"\")",
+      "edit": true,
+      "hide": false,
+      "rank": ""
+    },
+    {
+      "fieldcode": "単価",
+      "state": true,
+      "formulaSet": "IF(分類=\"明細\",単価,\"\")",
+      "edit": true,
+      "hide": false,
+      "rank": ""
+    },
+    {
+      "fieldcode": "金額",
+      "state": true,
+      "formulaSet": "LET(CNO,ROWNO(テーブル),\n  SWITCH(分類,\n    \"明細\",数量*単価,\n    \"小計\",LET(PNO,NVL(LASTIF(AND(ROWNO(テーブル)<CNO,分類=\"小計\"),ROWNO(テーブル)),-1),\n      SUMIF(AND(ROWNO(テーブル)<CNO,ROWNO(テーブル)>PNO,分類=\"明細\"),金額)),\n    \"\")\n)",
+      "edit": false,
+      "hide": false,
+      "rank": ""
+    }
+  ]
+}

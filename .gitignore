@@ -1,0 +1,20 @@
+node_modules/
+# ビルドの出力
+dist/
+dist-mcpb/
+dist-plugin/
+*.mcpb
+# 認証情報とレコードの値・個人情報（入れてはいけないもの）
+.env
+env/
+records/
+users/
+out/
+# OS
+.DS_Store
+Thumbs.db
+# Claude Code がプラグインを読み込むときに置く型のファイル（--plugin-dir）
+.claude-plugin/types/
+.tmp/
+# 機器ごとの Claude Code の設定
+.claude/settings.local.json

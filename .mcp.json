@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "formula": {
+      "command": "node",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/dist/server/index.cjs",
+        "--surface",
+        "claude-code",
+        "--roots",
+        "${user_config.workspaceRoots}"
+      ],
+      "env": {
+        "FORMULA_PLUGIN_ZIP": "${user_config.pluginZip}",
+        "FORMULA_KINTONE_CONFIG": "${user_config.kintoneConfig}"
+      }
+    }
+  }
+}

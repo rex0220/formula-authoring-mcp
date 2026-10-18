@@ -1,0 +1,4 @@
+# どの機器でも LF で取り出す（core.autocrlf の値に頼らない）。
+# Windows の core.autocrlf=true だと references/template/ が CRLF になって SOURCE.json の sha256 と合わずビルドが止まり、
+# .mcpb とプラグインの zip の中身も Mac と変わる。LF なら Windows で作っても公開版と同じ sha256（2026-10-11 Takashi）
+* text=auto eol=lf

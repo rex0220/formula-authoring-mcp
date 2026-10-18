@@ -1,0 +1,155 @@
+{
+  "tool": "formula-authoring record",
+  "fetchedAt": "2026-10-17T00:00:00.000Z",
+  "baseUrl": "https://dev-x.cybozu.com",
+  "appId": 2305,
+  "id": 7,
+  "record": {
+    "$id": {
+      "type": "__ID__",
+      "value": "7"
+    },
+    "$revision": {
+      "type": "__REVISION__",
+      "value": "3"
+    },
+    "レコード番号": {
+      "type": "RECORD_NUMBER",
+      "value": "7"
+    },
+    "カテゴリー": {
+      "type": "DROP_DOWN",
+      "value": "標準"
+    },
+    "商品セット": {
+      "type": "CHECK_BOX",
+      "value": [
+        "A"
+      ]
+    },
+    "金額合計": {
+      "type": "NUMBER",
+      "value": ""
+    },
+    "テーブル": {
+      "type": "SUBTABLE",
+      "value": [
+        {
+          "id": "1",
+          "value": {
+            "No": {
+              "type": "NUMBER",
+              "value": "1"
+            },
+            "分類": {
+              "type": "DROP_DOWN",
+              "value": "概要"
+            },
+            "商品": {
+              "type": "SINGLE_LINE_TEXT",
+              "value": "セットA"
+            },
+            "数量": {
+              "type": "NUMBER",
+              "value": ""
+            },
+            "単価": {
+              "type": "NUMBER",
+              "value": ""
+            },
+            "金額": {
+              "type": "NUMBER"
+            }
+          }
+        },
+        {
+          "id": "2",
+          "value": {
+            "No": {
+              "type": "NUMBER",
+              "value": "2"
+            },
+            "分類": {
+              "type": "DROP_DOWN",
+              "value": "明細"
+            },
+            "商品": {
+              "type": "SINGLE_LINE_TEXT",
+              "value": "部品X"
+            },
+            "数量": {
+              "type": "NUMBER",
+              "value": "2"
+            },
+            "単価": {
+              "type": "NUMBER",
+              "value": "100"
+            },
+            "金額": {
+              "type": "NUMBER",
+              "value": ""
+            }
+          }
+        },
+        {
+          "id": "3",
+          "value": {
+            "No": {
+              "type": "NUMBER",
+              "value": "3"
+            },
+            "分類": {
+              "type": "DROP_DOWN",
+              "value": "明細"
+            },
+            "商品": {
+              "type": "SINGLE_LINE_TEXT",
+              "value": "部品Y"
+            },
+            "数量": {
+              "type": "NUMBER",
+              "value": "3"
+            },
+            "単価": {
+              "type": "NUMBER",
+              "value": "200"
+            },
+            "金額": {
+              "type": "NUMBER",
+              "value": ""
+            }
+          }
+        },
+        {
+          "id": "4",
+          "value": {
+            "No": {
+              "type": "NUMBER",
+              "value": "4"
+            },
+            "分類": {
+              "type": "DROP_DOWN",
+              "value": "小計"
+            },
+            "商品": {
+              "type": "SINGLE_LINE_TEXT",
+              "value": ""
+            },
+            "数量": {
+              "type": "NUMBER",
+              "value": ""
+            },
+            "単価": {
+              "type": "NUMBER",
+              "value": ""
+            },
+            "金額": {
+              "type": "NUMBER",
+              "value": ""
+            }
+          }
+        }
+      ]
+    }
+  }
+}

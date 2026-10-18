@@ -1,0 +1,99 @@
+/**
+ * ツールで共通の部品: 入力の workspaceId（出し分けで必須かが変わる）、作業フォルダーを決めて計算式プラグインのエンジンと評価の Worker を用意する流れ、
+ * 中核の SaveResult の応答への写し方
+ */
+import { z } from "zod";
+import { WorkspaceError, type Surface } from "../binding.ts";
+import { buildProblem, zipProblem } from "../compat.ts";
+import { PluginZipError, loadPolicy, type Engine, type EvalSource, type Policy, type RunOptions, type SaveResult, type WorkspaceMode } from "../core.ts";
+import { zipGuide, zipOf, type ServerContext } from "../context.ts";
+import { failure, ok, type Finding, type ToolResult } from "../result.ts";
+import { describeZipError } from "../zip-error.ts";
+
+/** workspaceId: Claude Code では必須（プラグインのフックが入れる）、Desktop では省略できる（設定の作業フォルダーを使う）。print-craft MCP の実装案 4.1 */
+export function workspaceIdSchema(surface: Surface) {
+  return surface === "claude-code"
+    ? z.string().min(1).max(4096).describe("作業フォルダー（formula のプラグインのフックが入れる。AI は何を渡してもよい）")
+    : z.string().min(1).max(4096).optional().describe("作業フォルダー（省略してよい。設定の作業フォルダーを使う）");
+}
+
+/** 作業フォルダーを使うツールの文脈（作業フォルダーの実際のパス、zip、主スレッドのエンジン、policy、動く形、評価の Worker の読み込み元と動かし方） */
+export interface WorkContextForTool {
+  root: string;
+  zip: string;
+  /** 主スレッドのエンジン（互換表の判定、fml_summary の既定値、fml_pull の保存値の読み取り。評価には使わない） */
+  engine: Engine;
+  policy: Policy;
+  /** 呼び出しの初めに 1 回読んだ動く形（接続のファイル。15.4、15.6） */
+  mode: WorkspaceMode;
+  /** 評価（Worker）の読み込み元と動かし方（計画 24.5） */
+  source: EvalSource;
+  run: (timeoutSec?: number) => RunOptions;
+}
+
+/**
+ * 作業フォルダーを決め、計算式プラグインのエンジンと policy を用意する。だめなら応答（denied / failed / incompatible）を返す。
+ * 作業フォルダーの照合（4.1）→ 計算式プラグインの zip（設定項目か .env）→ エンジン（主スレッド。互換表の判定）→ policy（作業フォルダーの policy/authoring-policy.json）→
+ * 動く形（接続のファイル。設定されていて読めなければ ConnectionError を投げる。1 接続の形に戻らない。15.4）
+ */
+export async function prepare(ctx: ServerContext, workspaceId: string | undefined): Promise<WorkContextForTool | ToolResult> {
+  let root: string;
+  try {
+    root = ctx.binding.resolve(workspaceId);
+  } catch (e) {
+    if (e instanceof WorkspaceError) return failure("denied", "WorkspaceError", e.message);
+    throw e;
+  }
+  const incompatible = incompatibleResult();
+  if (incompatible) return incompatible;
+  const zip = zipOf(ctx, root);
+  if (zip.problem) return failure("failed", "PluginZipError", `計算式プラグインの zip の設定が読めない: ${zip.problem}`);
+  if (!zip.zip) return failure("failed", "PluginZipError", `計算式プラグインの zip が未設定。${zipGuide(ctx.surface)}`);
+  let engine: Engine;
+  try {
+    engine = await ctx.engine(zip.zip);
+  } catch (e) {
+    if (!(e instanceof PluginZipError)) throw e;
+    // 誤りの種類ごとの決まった文（zip のパスや zip の中のコードの文を返さない）。版が対応外は incompatible、それ以外（無い・読めない・変わった）は failed
+    const r = describeZipError(e, ctx.surface);
+    return r.incompatible ? failure("incompatible", "IncompatibleError", r.text) : failure("failed", "PluginZipError", r.text);
+  }
+  const zp = zipProblem(engine);
+  if (zp) return failure("incompatible", "IncompatibleError", zp);
+  const policy = loadPolicy(root);
+  return { root, zip: zip.zip, engine, policy, mode: ctx.mode(root), source: ctx.evalSource(zip.zip), run: (t) => ctx.runOptions(t) };
+}
+
+/** 互換表とビルドの組み合わせが合わなければ incompatible（作業フォルダーを使うツールだけが使う。7 章） */
+export function incompatibleResult(): ToolResult | undefined {
+  const p = buildProblem();
+  return p ? failure("incompatible", "IncompatibleError", `${p}（formula MCP を入れ直す・更新する）`) : undefined;
+}
+
+/** 動く形を要るときに 1 回だけ読む（kintone/** の中のファイルを読むときだけ。fml_summary / fml_diff は接続のファイルが壊れていても settings/ を読める。15.9 の表） */
+export function lazyMode(ctx: ServerContext, root: string): () => WorkspaceMode {
+  let m: WorkspaceMode | undefined;
+  return () => (m ??= ctx.mode(root));
+}
+
+export const isToolResult = (v: unknown): v is ToolResult => typeof v === "object" && v !== null && "content" in v && "isError" in v;
+
+/** 中核が code を返さなかったときの誤りの種類 */
+const DEFAULT_CODE: Record<Exclude<SaveResult["status"], "ok">, string> = {
+  invalid: "InputError",
+  conflict: "ConflictError",
+  denied: "PermissionError",
+  failed: "Error"
+};
+
+/** 中核の SaveResult を応答に（確定の後に片付けられなかったときは ok に cleanup と note を添える。extra は ok の応答に足す値） */
+export function fromSaveResult(r: SaveResult, extra: Record<string, unknown> = {}): ToolResult {
+  const findings = r.findings as unknown as Finding[];
+  if (r.status === "ok") {
+    return ok(
+      { path: r.path, ...(r.summary ? { summary: r.summary } : {}), ...(r.diff ? { diff: r.diff } : {}), ...extra, ...(r.cleanup ? { cleanup: r.cleanup, note: r.message } : {}) },
+      { findings, digest: r.digest }
+    );
+  }
+  return failure(r.status, r.code ?? DEFAULT_CODE[r.status], r.message ?? r.status, findings);
+}
