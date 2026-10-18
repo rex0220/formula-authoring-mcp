@@ -25,8 +25,8 @@ export const DOCS: DocsBundle = typeof __FML_DOCS__ === "string" ? (JSON.parse(_
 
 /** 丸ごと返す大きさの上限（これを超える資料は見出しの一覧と query で） */
 export const WHOLE_MAX = 32 * 1024;
-/** query の結果の上限 */
-export const QUERY_MAX_ENTRIES = 12;
+/** query の結果の上限（節の数は多めに。本当の上限は文字数。12 では DIC_* のような仲間の関数が表の行だけで打ち切られ、関数ごとに query を繰り返していた。0.2.3） */
+export const QUERY_MAX_ENTRIES = 40;
 export const QUERY_MAX_CHARS = 24 * 1024;
 
 export function sectionOf(key: string): DocSection | undefined {
