@@ -107,7 +107,7 @@ export function registerTry(server: McpServer, ctx: ServerContext): void {
               z
                 .object({
                   formula: z.string().min(1).max(TRY_MAX_FORMULA_CHARS).describe("計算式（サンプルアプリの項目コードで。例 ROUND(数値1 / 3, 2)、SUM(T1_数値)、DATE_FORMAT(日付1, \"YYYY/MM/DD\")）"),
-                  as: z.string().min(1).max(100).optional().describe("対象の型（NUMBER / TEXT / DATE / DATETIME / TIME / DROP_DOWN / RADIO_BUTTON / CHECK_BOX / MULTI_SELECT / USER_SELECT / ORGANIZATION_SELECT / GROUP_SELECT / LINK / RICH_TEXT / MULTI_LINE_TEXT）か項目コード。省略は TEXT（文字列 1 行。どの値も文字列で見える）。型のときは式が参照していない項目が対象になる"),
+                  as: z.string().min(1).max(100).optional().describe("対象の型（NUMBER / TEXT / DATE / DATETIME / TIME / DROP_DOWN / RADIO_BUTTON / CHECK_BOX / MULTI_SELECT / USER_SELECT / ORGANIZATION_SELECT / GROUP_SELECT / LINK / RICH_TEXT / MULTI_LINE_TEXT）か項目コード。省略は TEXT（文字列 1 行。どの値も文字列で見える）。型のときは式が参照していない項目が対象になる。スペース項目（HTML の表示）は sp1 か SPACER（返り値をそのまま返す）"),
                   table: z.string().min(1).max(100).optional().describe("テーブルの中で計算する（行ごと）ときのテーブルのコード（テーブル1 / テーブル2）")
                 })
                 .strict()

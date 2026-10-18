@@ -10,7 +10,7 @@ formula MCP の配布物（Claude Desktop の `.mcpb` と、Claude Code のプ�
 | --- | --- | --- | --- |
 | @modelcontextprotocol/core | 2.0.0 | MIT | 本体 |
 | @modelcontextprotocol/server | 2.0.0 | MIT | 本体 |
-| @rex0220/formula-authoring-tools | 0.3.0 | MIT | 本体、評価の Worker |
+| @rex0220/formula-authoring-tools | 0.3.1 | MIT | 本体、評価の Worker |
 | buffer-image-size | 0.6.4 | MIT | 本体、評価の Worker |
 | entities | 7.0.1 | BSD-2-Clause | 本体、評価の Worker |
 | happy-dom | 20.14.5 | MIT | 本体、評価の Worker |
@@ -477,7 +477,7 @@ CC-BY-4.0. See https://creativecommons.org/licenses/by/4.0/legalcode for
 the full license text.
 ```
 
-## @rex0220/formula-authoring-tools 0.3.0
+## @rex0220/formula-authoring-tools 0.3.1
 
 - ライセンス: MIT
 - 入手先: https://github.com/rex0220/formula-authoring
