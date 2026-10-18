@@ -23,8 +23,8 @@
       ],
       "source": {
         "source": "archive",
-        "url": "https://github.com/rex0220/formula-authoring-mcp/releases/download/v0.2.4/formula-plugin-0.2.4.zip",
-        "sha256": "979b6b4b8cd53c14234a88b4e9300b6dd5eafcab3b6ec98c86b7d3f51df0a4cc"
+        "url": "https://github.com/rex0220/formula-authoring-mcp/releases/download/v0.2.5/formula-plugin-0.2.5.zip",
+        "sha256": "8e4a4e176539abfb6b06d46ad353d711279a44d38df2b46c16f63dd5fe63ef15"
       }
     }
   ]
