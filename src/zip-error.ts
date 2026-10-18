@@ -4,7 +4,7 @@
  * 「zip として読めない」と「読めるが合わない」を分け、分かっていれば計算式プラグインの版と authoring API の版を返す（print-craft MCP の Codex の B1 再レビュー MAJOR 1 と同じ）
  */
 import type { Surface } from "./binding.ts";
-import { MIN_PLUGIN_VERSION, PluginZipError, type PluginZipErrorCode } from "./core.ts";
+import { MIN_PLUGIN_VERSION, PluginZipError, builtinErrorName, type PluginZipErrorCode } from "./core.ts";
 import { zipGuide } from "./context.ts";
 
 export interface ZipErrorReport {
@@ -27,7 +27,8 @@ const NOT_ABOUT_THIS_ZIP = new Set<string>(["zip-changed", "restart-required"]);
 
 export function describeZipError(e: unknown, surface: Surface): ZipErrorReport {
   if (!(e instanceof PluginZipError)) {
-    return { code: "unexpected", incompatible: false, text: `計算式プラグインの zip を読み込めない（想定外の誤り: ${e instanceof Error ? e.constructor.name : typeof e}）。formula MCP を入れ直す・更新する` };
+    // 種類は組み込みの名前だけ（zip の authoring API の getter などが独自の例外を投げうる。name / constructor.name は使わない）
+    return { code: "unexpected", incompatible: false, text: `計算式プラグインの zip を読み込めない（想定外の誤り: ${builtinErrorName(e)}）。formula MCP を入れ直す・更新する` };
   }
   const about = !NOT_ABOUT_THIS_ZIP.has(e.code);
   const v = about ? e.info.pluginVersion || undefined : undefined;

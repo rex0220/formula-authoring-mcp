@@ -7,7 +7,8 @@
  *   - 書く直前に、書ける場所と、kintone/ の下なら操作 × 場所・印・接続の許可（接続のファイルを読み直す）を確かめ直す
  */
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { closeSync, existsSync, fchmodSync, mkdirSync, openSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { randomBytes } from "node:crypto";
 import path from "node:path";
 import { WorkspaceError as BindingError } from "../binding.ts";
 import {
@@ -26,6 +27,7 @@ import {
   NotAllowedError,
   PathError,
   PermissionError,
+  PluginZipError,
   PolicyError,
   QueryError,
   RestError,
@@ -36,6 +38,8 @@ import {
   assertAppMark,
   assertChangeAllowed,
   assertUsableInKintone,
+  builtinErrorName,
+  cleanupAll,
   connectionStatusOf,
   digestOf,
   findAppDir,
@@ -48,12 +52,20 @@ import {
   resolveWrite,
   validateUsersSource,
   type ChangeOp,
+  type PluginZipErrorCode,
   type ProfileDef,
   type UsersOrigin,
   type UsersSource,
   type WorkspaceMode
 } from "../core.ts";
-import { failure, type ToolResult } from "../result.ts";
+import { failure, sanitizeMessage, type ToolResult } from "../result.ts";
+import { describeZipError } from "../zip-error.ts";
+
+/** 想定外の誤りの種類を標準エラーに残す（文は残さない: Worker の中の例外の文はレコードの値や zip のパスを含みうる。Codex のレビュー BLOCKER 3）。起動のときに main が渡す */
+let errorLogger: (line: string) => void = () => undefined;
+export function setErrorLogger(fn: (line: string) => void): void {
+  errorLogger = fn;
+}
 
 export const rel = (root: string, abs: string): string => path.relative(root, abs).replace(/\\/g, "/");
 
@@ -197,9 +209,10 @@ export function trustedBaseUrl(mode: WorkspaceMode, root: string, file: string, 
   }
 }
 
-/** 応答に足す評価の文脈の接続先 */
+/** 応答に足す評価の文脈の接続先（接続のファイルの baseUrl は長さの上限が無いので、表示は 300 文字まで。Codex の r4 レビュー M1） */
 export function baseUrlFields(t: TrustedBaseUrl): Record<string, unknown> {
-  return { contextBaseUrl: t.baseUrl ?? null, ...(t.reason ? { contextBaseUrlReason: t.reason } : {}) };
+  const url = t.baseUrl === undefined ? null : t.baseUrl.length > 300 ? `${t.baseUrl.slice(0, 300)}…` : t.baseUrl;
+  return { contextBaseUrl: url, ...(t.reason ? { contextBaseUrlReason: t.reason } : {}) };
 }
 
 /** calc のレコードのファイル: アプリのフォルダーの設定なら同じフォルダーの records/<番号>.json、それ以外は records/<app>-<番号>.json（CLI と同じ） */
@@ -211,10 +224,11 @@ export function recordFileFor(root: string, settingsFile: string, appId: number,
   return f;
 }
 
-/** ユーザー情報のテストデータ（users/ のファイル。無ければ既定の架空の 10 人） */
+/** ユーザー情報のテストデータ（users/ の中のファイルだけ。無ければ既定の架空の 10 人）。実体が users/ の外（settings/ や records/、symlink の先）なら denied（Codex のレビュー MAJOR 6） */
 export function usersSourceFor(root: string, users: string | undefined, mode: ModeSource): { src: UsersSource; origin: UsersOrigin } {
   if (!users) return { src: DEFAULT_USERS, origin: { kind: "default" } };
   const abs = resolveRead(users, root);
+  if (!isInside(abs, path.join(root, "users"))) throw new PermissionError(`ユーザー情報のファイルは users/ の中のものだけ（fml_users が書いたもの）: ${users}`);
   if (!existsSync(abs)) throw new InputError(`ユーザー情報のファイルが無い: ${rel(root, abs)}（fml_users で取る）`);
   assertReadable(root, abs, mode);
   return { src: validateUsersSource(readJsonLimited(abs), rel(root, abs)), origin: { kind: "file", file: rel(root, abs) } };
@@ -243,7 +257,27 @@ export function writeChecked(root: string, target: string, text: string, roots: 
   mkdirSync(path.dirname(real), { recursive: true });
   if (resolveWrite(rel(root, real), roots, root) !== real) throw new PermissionError(`書く先のフォルダーが途中で変わった（symlink など）: ${rel(root, real)}`);
   assertChangeAllowed(root, real, op, mode);
-  writeFileSync(real, text, fileMode !== undefined ? { encoding: "utf8", mode: fileMode } : "utf8");
+  if (fileMode === undefined) {
+    writeFileSync(real, text, "utf8");
+    return real;
+  }
+  // レコード・ユーザー情報（機微）: 本人だけが読める一時ファイル（wx、mode を fchmod で確かめてから中身を書く）を同じフォルダーに作り、名前の付け替えで置き換える。
+  // 既にあるファイルに書き足してから chmod すると、その間は前の権限（0644 など）で読めるので、そうしない（Codex の r2 レビュー R2）
+  const tmp = path.join(path.dirname(real), `.${path.basename(real)}.${randomBytes(6).toString("hex")}.tmp`);
+  let fd = openSync(tmp, "wx", fileMode);
+  let placed = false;
+  try {
+    fchmodSync(fd, fileMode);
+    writeFileSync(fd, text, "utf8"); // fd に全部書き切る（writeSync の返りの長さに頼らない）
+    closeSync(fd);
+    fd = -1;
+    renameSync(tmp, real);
+    placed = true;
+  } finally {
+    // close と一時ファイルの削除は別々に（一方の失敗で他方を飛ばさない。Codex の r3 レビュー N3）
+    if (fd !== -1) cleanupAll([() => closeSync(fd)]);
+    if (!placed) cleanupAll([() => rmSync(tmp, { force: true })]);
+  }
   return real;
 }
 
@@ -262,16 +296,36 @@ export function fromError(e: unknown): ToolResult {
   if (e instanceof KintoneUrlError) return failure("invalid", "KintoneUrlError", message);
   if (e instanceof UsersDataError) return failure("invalid", "UsersDataError", message);
   if (e instanceof InputError || e instanceof SyntaxError) return failure("invalid", "InputError", message);
-  // 評価の Worker の誤り（zip が読めない、時間切れ、入力の誤り）
+  // 主スレッドの計算式プラグインの zip の誤り（fml_summary / fml_pull / fml_fields の engine）: 種類ごとの決まった文（パスを含まない）
+  if (e instanceof PluginZipError) {
+    const r = describeZipError(e, "claude-code");
+    return failure(r.incompatible ? "incompatible" : "failed", r.incompatible ? "IncompatibleError" : "PluginZipError", r.text);
+  }
+  // 評価の Worker の誤り（時間切れの文は決まった文。それ以外の Worker の中の例外の文は、zip のコードがレコードの値を入れうるので返さない。Codex のレビュー BLOCKER 3）
   if (e instanceof EvalTimeoutError) return failure("failed", "EvalTimeoutError", message);
-  if (e instanceof EvalError) return failure(e.innerName === "InputError" ? "invalid" : "failed", e.innerName, message);
-  if (e instanceof UsersPullError) return failure("failed", "UsersPullError", message);
+  if (e instanceof EvalError) return failure(e.kind === "input" ? "invalid" : "failed", { input: "InputError", zip: "PluginZipError", users: "UsersDataError", policy: "PolicyError", other: e.innerName }[e.kind], evalErrorText(e));
+  // 参照するコードが User API に無い: コードは返さない（式の文字列は fml_summary で見る）
+  if (e instanceof UsersPullError) return failure("failed", "UsersPullError", message.replace(/^(式が参照している(?:ユーザー|組織|グループ)が無い): .*$/s, "$1（コードは返さない。fml_summary の field で式の文字列を確かめる。全部取るなら onlyReferenced を外す）"));
   if (e instanceof PolicyError) return failure("failed", "PolicyError", message);
   if (e instanceof AuthError) return failure("failed", "AuthError", message);
   if (e instanceof NotAllowedError) return failure("denied", "NotAllowedError", message);
   if (e instanceof RestError) return failure("failed", "RestError", message);
-  const err = e instanceof Error ? e : new Error(message);
-  return failure("failed", err.name && err.name !== "Error" ? err.name : err.constructor?.name ?? "Error", message);
+  // 想定外の誤り: 種類だけを返し、文は返さない（文は値やパスを含みうる）。種類は instanceof で決めた組み込みの名前（主スレッドでも zip のコードが動く（pull / summary）ので name / constructor.name は使わない）。種類は標準エラーに残す
+  const code = builtinErrorName(e);
+  errorLogger(`想定外の誤り（${code}。文はレコードの値やパスを含みうるので出さない）`);
+  return failure("failed", code, `想定外の誤り（${code}）。誤りの文は値やパスを含みうるので返さない。fml_status / fml_workspace_status で状態を確かめ、直らなければ利用者に伝える`);
+}
+
+/**
+ * Worker の中の誤りの文（決まった文だけ）: 入力の誤り（中核の InputError。相対パスと決まった文）はそのまま、計算式プラグインの zip の誤りは種類ごとの決まった文、
+ * それ以外（zip のコードの例外、想定外）は種類だけ（文は返さない）
+ */
+function evalErrorText(e: EvalError): string {
+  // 種類（kind）は中核が instanceof で決めたもの（zip のコードが name を偽装しても other のまま）
+  if (e.kind === "input" || e.kind === "users" || e.kind === "policy") return sanitizeMessage(e.message);
+  if (e.kind === "zip" && e.code) return describeZipError(new PluginZipError(e.message, e.code as PluginZipErrorCode, {}), "claude-code").text;
+  errorLogger(`評価の Worker の中の誤り（${e.innerName}${e.code ? ` ${e.code}` : ""}。文は出さない）`);
+  return `評価の途中で想定外の誤り（${e.innerName}）。誤りの文は値やパスを含みうるので返さない。fml_normalize で設定を確かめ、fml_status で計算式プラグインの zip を確かめる`;
 }
 
 const shortHash = (v: unknown): string => createHash("sha256").update(JSON.stringify(v)).digest("hex").slice(0, 8);

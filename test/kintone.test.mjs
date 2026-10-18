@@ -3,9 +3,9 @@
 // GET だけ、アプリごとのトークン、値を返さない、秘密の値・接続のファイルのパス・kintone のサーバーの文を返さない、接続の誤りの status と code を確かめる
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, readFileSync, rmSync, statSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, symlinkSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { SKIP as skip, TOKENS, connEnv, connectClaudeCode, connectDesktop, fetchLog, leakedTokens, makeConn, makeWorkspace, sc, tokenHash } from "./helpers.mjs";
+import { CONN, SKIP as skip, TOKENS, connEnv, connectClaudeCode, connectDesktop, fetchLog, leakedTokens, makeConn, makeWorkspace, sc, tokenHash } from "./helpers.mjs";
 
 /** レコードの値・サーバーの文（応答に出てはいけない） */
 const VALUES = ["部品X", "部品Y", "セットA", "DESCRIPTION-SECRET", "SERVER-SECRET-MESSAGE", "架空ユーザー01", "demo_user01"];
@@ -68,6 +68,13 @@ test("fml_record: アプリのフォルダーの records/<番号>.json に保存
     const file = path.join(root, APP_DIR, "records", "7.json");
     assert.ok(existsSync(file));
     if (process.platform !== "win32") assert.equal(statSync(file).mode & 0o777, 0o600);
+    // 既にある 0644 のファイルを取り直しても 0600 にする（writeFileSync の mode は作るときだけ。Codex のレビュー BLOCKER 2）
+    if (process.platform !== "win32") {
+      chmodSync(file, 0o644);
+      assert.equal(sc(await s.call("fml_record", { workspaceId: root, app: 2305, id: 7 })).status, "ok");
+      assert.equal(statSync(file).mode & 0o777, 0o600, "取り直した後も本人だけ");
+      assert.deepEqual(readdirSync(path.dirname(file)).filter((n) => n.endsWith(".tmp")), [], "一時ファイルを残さない");
+    }
     assert.deepEqual(noValues(s.output()), [], "レコードの値を返さない");
     const missing = sc(await s.call("fml_record", { workspaceId: root, app: 2305, id: 999 }));
     assert.deepEqual([missing.status, missing.error.code], ["failed", "RestError"]);
@@ -98,6 +105,21 @@ test("fml_users: User API（Bearer の userApiToken）から users/<ホスト>.j
     assert.deepEqual(noValues(s.output()), [], "ユーザーのコードや名前を返さない");
     const again = sc(await s.call("fml_users", { workspaceId: root, file: r.result.path }));
     assert.deepEqual([again.status, again.result.users], ["ok", 3]);
+    if (process.platform !== "win32") {
+      chmodSync(file, 0o644);
+      assert.equal(sc(await s.call("fml_users", { workspaceId: root })).status, "ok");
+      assert.equal(statSync(file).mode & 0o777, 0o600, "取り直した後も本人だけ（BLOCKER 2）");
+    }
+    // users/ の外のファイルはユーザー情報として読まない（settings/ や fields/ の JSON。Codex のレビュー MAJOR 6）
+    const outside = sc(await s.call("fml_users", { workspaceId: root, file: "fields/2305.json" }));
+    assert.deepEqual([outside.status, outside.error.code], ["denied", "PermissionError"]);
+    assert.equal(sc(await s.call("fml_save_settings", { workspaceId: root, path: "settings/u.json", content: readFileSync(new URL("./fixtures/settings-2305.json", import.meta.url), "utf8"), fields: "fields/2305.json", expectedAbsent: true })).status, "ok");
+    const asUsers = sc(await s.call("fml_normalize", { workspaceId: root, path: "settings/u.json", users: "settings/u.json" }));
+    assert.deepEqual([asUsers.status, asUsers.error.code], ["denied", "PermissionError"]);
+    // users/ の中の symlink が外（settings/）を指すものも読まない（実体で判定）
+    symlinkSync(path.join(root, "settings", "u.json"), path.join(root, "users", "link.json"));
+    const viaLink = sc(await s.call("fml_users", { workspaceId: root, file: "users/link.json" }));
+    assert.deepEqual([viaLink.status, viaLink.error.code], ["denied", "PermissionError"]);
     // 参照するコードが無い設定
     assert.equal(sc(await s.call("fml_save_settings", { workspaceId: root, path: "settings/a.json", content: readFileSync(new URL("./fixtures/settings-2305.json", import.meta.url), "utf8"), fields: "fields/2305.json", expectedAbsent: true })).status, "ok");
     const only = sc(await s.call("fml_users", { workspaceId: root, onlyReferenced: "settings/a.json" }));
@@ -131,6 +153,25 @@ test("desktop: kintone_get_app は決めた項目だけ（説明・作成者は�
     const bad = sc(await s.call("kintone_list_records", { app: 2305, query: "limit 100" }));
     assert.deepEqual([bad.status, bad.error.code], ["invalid", "QueryError"]);
     assert.deepEqual(noValues(s.output()), []);
+  } finally {
+    await s.close();
+    conn.cleanup();
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("呼び出しの途中で接続のファイルが変わったら conflict（connection-changed）。何も書かない", { skip }, async () => {
+  const root = makeWorkspace();
+  const conn = makeConn();
+  const rewrite = path.join(conn.dir, "rewrite.json");
+  const changed = { ...CONN, profiles: { ...CONN.profiles, dev: { ...CONN.profiles.dev, baseUrl: "https://x.cybozu.com" } } };
+  writeFileSync(rewrite, JSON.stringify({ target: conn.file, content: changed }));
+  const s = await connectClaudeCode([root], connEnv(conn.file, { FORMULA_TEST_REWRITE_CONN: rewrite }), { mockFetch: true });
+  try {
+    const r = sc(await s.call("fml_fields", { workspaceId: root, app: 2305 }));
+    assert.deepEqual([r.status, r.error.code], ["conflict", "connection-changed"], JSON.stringify(r));
+    assert.ok(!existsSync(path.join(root, "kintone")), "何も書かない");
+    assert.deepEqual(leakedTokens(s.output()), []);
   } finally {
     await s.close();
     conn.cleanup();

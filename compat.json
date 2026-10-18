@@ -2,14 +2,14 @@
   "schemaVersion": 1,
   "runtimeChecks": {
     "mcpVersion": "0.1.0",
-    "coreVersion": ">=0.2.0 <0.3.0",
+    "coreVersion": ">=0.2.1 <0.3.0",
     "coreApiVersion": 2,
     "docsRevision": "6180599",
     "authoringApiVersions": [1],
     "pluginVersion": { "min": 101 }
   },
   "informational": {
-    "cliVersion": ">=0.2.0 <0.3.0",
+    "cliVersion": ">=0.2.1 <0.3.0",
     "note": "計算式プラグインの版の上限は書かない（authoring API の版の判定は中核が行う。版を上げただけの計算式プラグインで formula MCP の公開を要しないように。print-craft MCP と同じ考え）。cliVersion は誰も実行のときに確かめない（テンプレートのバージョンアップ手順の目安）"
   }
 }

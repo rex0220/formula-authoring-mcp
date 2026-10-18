@@ -26,6 +26,7 @@ import { registerUsers } from "./tools/users.ts";
 import { registerWorkspaceFiles } from "./tools/workspace-files.ts";
 import { registerWorkspaceStatus } from "./tools/workspace-status.ts";
 import { setScrubRoots } from "./result.ts";
+import { setErrorLogger } from "./tools/files.ts";
 import { VERSION, versionLine } from "./version.ts";
 
 export { VERSION };
@@ -82,6 +83,7 @@ export async function main(argv: readonly string[] = process.argv.slice(2), env:
   const desktopRoot = args.surface === "desktop" ? binding.desktopWorkspace().root : undefined;
   setScrubRoots(desktopRoot ? [desktopRoot] : binding.registered.roots);
   const ctx = createServerContext(args.surface, binding, env, log);
+  setErrorLogger(log);
   const ws = args.surface === "desktop" ? (binding.desktopWorkspace().root ?? `未設定（${binding.desktopWorkspace().problem}）`) : `登録 ${binding.registered.roots.length} 件`;
   // kintone の接続のファイルはファイルの名前だけ（パスと中身は出さない）
   const conn = ctx.connectionFile ? `設定済み（${path.basename(ctx.connectionFile)}）` : "未設定";

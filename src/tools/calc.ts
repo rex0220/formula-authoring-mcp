@@ -19,11 +19,23 @@ import { usersSchema } from "./save.ts";
 
 /** 1 回のレコード数の上限 */
 export const MAX_RECORDS = 10;
-/** 1 レコードの行の上限と、エラーの上限 */
+/** 1 レコードの行の上限と、エラーの上限、sink の上限 */
 const MAX_LINES = 300;
 const MAX_ERRORS = 20;
-/** 応答の大きさの上限（文字） */
-const MAX_RESULT_CHARS = 64 * 1024;
+const MAX_SINKS = 20;
+/** 1 つの値（before / after を JSON にしたもの）とエラーの文の長さの上限（文字） */
+const MAX_VALUE_CHARS = 2000;
+const MAX_ERROR_CHARS = 300;
+/** 応答全体（result + findings を JSON にしたもの）の大きさの上限（バイト。Codex のレビュー MAJOR 5） */
+const MAX_RESULT_BYTES = 64 * 1024;
+
+/** 長い値を切る（文字列はそのまま、ほかは JSON にして。切ったときは印を付ける） */
+function cutValue(v: unknown): unknown {
+  const s = typeof v === "string" ? v : JSON.stringify(v);
+  if (s === undefined || s.length <= MAX_VALUE_CHARS) return v;
+  return `${s.slice(0, MAX_VALUE_CHARS)}…（${s.length.toLocaleString()} 文字を切った）`;
+}
+const cutText = (s: string, max: number): string => (s.length > max ? `${s.slice(0, max)}…` : s);
 
 const NOTE = "既存のレコードは変わっていない（模擬）。反映は設定画面で取り込み → 保存 → 運用環境に反映。既存レコードは「既存レコードを変更」か「一括計算」で";
 
@@ -40,15 +52,15 @@ interface RecordOut {
 
 function shape(r: CalcRecordResult, all: boolean): RecordOut {
   const picked = all ? r.lines : r.lines.filter((l) => l.changed || l.marks.length > 0);
-  const lines = picked.slice(0, MAX_LINES);
+  const lines = picked.slice(0, MAX_LINES).map((l) => ({ ...l, before: cutValue(l.before), after: cutValue(l.after) }));
   return {
     id: r.id,
     changed: r.changed,
     lines,
     ...(picked.length > lines.length ? { linesOmitted: picked.length - lines.length } : {}),
-    errors: r.errors.slice(0, MAX_ERRORS),
+    errors: r.errors.slice(0, MAX_ERRORS).map((e) => ({ ...e, message: cutText(e.message, MAX_ERROR_CHARS) })),
     ...(r.errors.length > MAX_ERRORS ? { errorCount: r.errors.length } : {}),
-    sinks: r.sinks,
+    sinks: r.sinks.slice(0, MAX_SINKS).map((s) => cutText(s, MAX_ERROR_CHARS)),
     failed: r.failed
   };
 }
@@ -72,7 +84,7 @@ export function registerCalc(server: McpServer, ctx: ServerContext): void {
           profile: profileSchema.describe("kintone の接続のファイルの profile（APP_URL などの評価に使う接続先。アプリのフォルダーの中のファイルは省略する）"),
           users: usersSchema,
           user: z.string().min(1).max(128).optional().describe("ログインユーザーのコード（ユーザー情報のテストデータに居ること。LOGIN_* や引数なしの UINFO() を使う式のとき）"),
-          event: z.string().regex(EVENT_RE).optional().describe("イベントの種別（EV_INFO(\"type\") の値。例 allUpdate（既定。既存レコードを変更）、batch（一括計算）、create、edit、change、submit）"),
+          event: z.string().regex(EVENT_RE).optional().describe("イベントの種別（EV_INFO(\"type\") の値。正式な名前だけ: allUpdate（既定。既存レコードを変更）、batch（一括計算）、app.record.create.show / .submit / .submit.success、app.record.edit.show / .submit / .submit.success、app.record.create.change.<項目コード> / app.record.edit.change.<項目コード>、app.record.index.edit.show / .submit、app.record.detail.show、app.record.detail.process.proceed。mobile. を頭に付けるとモバイル）"),
           action: z.string().max(200).optional().describe("プロセス管理のアクション名（EV_INFO(\"action\")）"),
           status: z.string().max(200).optional().describe("プロセス管理の今のステータス（EV_INFO(\"status\")）"),
           nextStatus: z.string().max(200).optional().describe("プロセス管理の次のステータス（EV_INFO(\"nextStatus\")）"),
@@ -116,22 +128,50 @@ export function registerCalc(server: McpServer, ctx: ServerContext): void {
           for (const r of shaped) {
             if (r.failed || r.errors.length) findings.push({ level: "error", rule: "calc.failed", message: `レコード ${r.id}: ${r.failed ? "実行時の sink が呼ばれた（走査の漏れ。結果を採らない）" : `式の評価に失敗 ${r.errors.length} 件`}` });
           }
-          // 応答全体の上限（行を後ろから減らす）
+          // 応答全体の上限（result と findings を JSON にしたバイト数。行を後ろから減らし、それでも超えればエラーの文を減らす）
+          // 上限は structuredContent（ok、status、findings、result の JSON。content の文はその整形版）のバイト数。打ち切りの finding も含めて測る（Codex の r2 レビュー R4）
+          const truncatedFinding: Finding = { level: "info", rule: "truncated", message: "返す量の上限（64 KiB）で行やエラーを打ち切った（linesOmitted / errorCount）。レコード数を減らすか、項目を絞る" };
+          const payload = () => ({ path: t.file.relPath, appId, contextLine: c.contextLine, notice: c.notice, summary: c.summary, records: shaped, failed: c.failed, ...baseUrlFields(t.baseUrl), note: NOTE });
+          const bytes = () => Buffer.byteLength(JSON.stringify({ ok: true, status: "ok", findings: [...findings, ...(truncated ? [truncatedFinding] : [])], result: payload() }), "utf8");
           let truncated = false;
-          const size = () => JSON.stringify(shaped).length;
-          while (size() > MAX_RESULT_CHARS) {
-            const longest = shaped.reduce((a, b) => (a.lines.length >= b.lines.length ? a : b));
-            if (longest.lines.length === 0) break;
-            const drop = Math.max(1, Math.ceil(longest.lines.length / 4));
-            longest.lines = longest.lines.slice(0, longest.lines.length - drop);
-            longest.linesOmitted = (longest.linesOmitted ?? 0) + drop;
+          let stage = 0;
+          while (bytes() > MAX_RESULT_BYTES) {
             truncated = true;
+            const longest = shaped.reduce((a, b) => (a.lines.length >= b.lines.length ? a : b), shaped[0]);
+            const withErrors = shaped.find((r) => r.errors.length > 0 || r.sinks.length > 0);
+            if (longest && longest.lines.length > 0) {
+              const drop = Math.max(1, Math.ceil(longest.lines.length / 4));
+              longest.lines = longest.lines.slice(0, longest.lines.length - drop);
+              longest.linesOmitted = (longest.linesOmitted ?? 0) + drop;
+            } else if (withErrors) {
+              withErrors.errorCount = withErrors.errorCount ?? withErrors.errors.length;
+              withErrors.errors = withErrors.errors.slice(0, Math.floor(withErrors.errors.length / 2));
+              withErrors.sinks = withErrors.sinks.slice(0, Math.floor(withErrors.sinks.length / 2));
+            } else if (stage === 0) {
+              // 固定の部分: findings の文を切り、件数も減らす（normalize の警告の文は設定の文字列を含みうる）
+              for (const f of findings) f.message = cutText(f.message, 200);
+              findings.splice(20);
+              stage = 1;
+            } else if (stage === 1) {
+              c.summary = cutText(c.summary, 500);
+              c.contextLine = cutText(c.contextLine, 500);
+              c.notice = cutText(c.notice, 500);
+              stage = 2;
+            } else if (stage === 2) {
+              // 最後: レコードの結果を外した最小の応答（固定の部分は path 512、文 500 × 3、接続先 300、レコード 10 件の数だけ）
+              shaped = shaped.map((r) => ({ id: r.id, changed: r.changed, lines: [], linesOmitted: (r.linesOmitted ?? 0) + r.lines.length, errors: [], errorCount: r.errorCount ?? r.errors.length, sinks: [], failed: r.failed }));
+              findings.splice(0);
+              stage = 3;
+            } else {
+              // ここには来ない（最小の応答は上限に収まる）。万一のときは文をすべて外す
+              c.summary = c.contextLine = c.notice = "";
+              break;
+            }
           }
-          if (truncated) findings.push({ level: "info", rule: "truncated", message: "返す量の上限（64 KiB）で行を打ち切った（linesOmitted）。レコード数を減らすか、項目を絞る" });
-          return ok(
-            { path: t.file.relPath, appId, contextLine: c.contextLine, notice: c.notice, summary: c.summary, records: shaped, failed: c.failed, ...baseUrlFields(t.baseUrl), note: NOTE },
-            { findings }
-          );
+          if (truncated) findings.push(truncatedFinding);
+          // 最後に必ず確かめる（上限の定義 = structuredContent の JSON のバイト数）
+          if (bytes() > MAX_RESULT_BYTES) return failure("failed", "ResultTooLarge", "結果が返す量の上限（64 KiB）に収まらない（レコード数を減らす）");
+          return ok(payload(), { findings });
         } catch (e) {
           return fromError(e);
         }

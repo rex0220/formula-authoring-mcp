@@ -17,7 +17,7 @@ test("接続のファイルが無い: mode は not-configured、next に設定�
     assert.deepEqual(r.result.workspace, { name: path.basename(root) });
     assert.equal(r.result.mode, "not-configured");
     assert.deepEqual(r.result.connection, { configured: false, ready: false, problem: { code: "not-configured", message: "kintone の接続のファイルが設定されていない" } });
-    assert.match(r.result.next.join("\n"), /\/config で formula の「kintone の接続のファイル」/);
+    assert.match(r.result.next.join("\n"), /\/config で formula の「計算式プラグインの接続のファイル（kintone）」/);
     assert.deepEqual([r.result.pluginZip.readable, r.result.pluginZip.compatible], [true, true]);
     assert.ok(!("legacyEnvironmentsJson" in r.result) && !("environmentsJson" in r.result), "無いときは environments.json のことを返さない（AI が作るものと読み違えた。手での確認 1）");
     assert.ok(!JSON.stringify(r).includes("environments.json"));

@@ -7,6 +7,8 @@
 - 入力は全ツール `additionalProperties: false`。パスはすべて作業フォルダーからの相対で、区切りは `/`（`..`・絶対パス・ドライブ名・`~`・`\`・NUL は denied、`./`・末尾の `/`・`//` は invalid）
 - 応答は全ツール共通の形（`ok / invalid / incompatible / conflict / denied / failed`、`findings`、`digest`）。`fml_docs` だけ文章
 - 読み取りだけのツールには `annotations: { readOnlyHint: true, openWorldHint: false }`
+- `users` / `file`（ユーザー情報のテストデータ）は `users/` の中のファイルだけ（実体が外なら denied）
+- 誤りの文: 中核の決まった文（入力の誤り、接続、権限）はそのまま。評価の Worker の中の例外と想定外の例外は**種類だけ**を返し、文は返さない（zip のコードが例外の文にレコードの値を入れうる。種類は標準エラーに残す）。User API に無いコードは返さない
 
 | ツール | 種類 | Claude Code | Desktop | 読み取りだけ | 入力 | 返すもの | 書く先 | CLI 相当 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -14,10 +16,10 @@
 | `fml_status` | ② | 出す | 出す | ○ | `{}` | 版、互換表、作業フォルダー、計算式プラグインの zip（読めるか、版、authoring API の版）、`capabilities`（authoring / kintone） | — | `version` |
 | `fml_workspace_status` | ③ | 出す | 出す | ○ | `{ workspaceId }` | 動く形、接続のファイル（profile ごと。秘密の値は返さない）、アプリのフォルダーの印、zip | — | `version` |
 | `fml_save_settings` | ① | 出す | 出す | — | `{ workspaceId, path, content, fields?, expectedAbsent: true, profile?, users? }` | `findings`、`summary`、`digest`、`contextBaseUrl` | `settings/`、`temp/`、`kintone/<profile>/<アプリ>/`（新しい設定） | `normalize --out` |
-| `fml_update_fields` | ① | 出す | 出す | — | `{ workspaceId, path, expectedDigest, rows, common?, fields?, profile?, users? }` | `findings`、`summary`、`diff`、`digest` | 同上（`-edit.json` と新しい設定。ダウンロード / pull は不可） | `normalize --out`（写しを直す） |
+| `fml_update_fields` | ① | 出す | 出す | — | `{ workspaceId, path, expectedDigest, rows, common?, fields?, profile?, users? }`（`common` は共通の設定のキー `COMMON_KEYS`（pluginEnable、pluginProductEnv、toolEnable、pluginComment、pluginDescription、pluginBtnInfo、pluginListInfo、authority、pluginMiscInfo）だけ） | `findings`、`summary`、`diff`、`digest` | 同上（`-edit.json` と新しい設定。ダウンロード / pull は不可） | `normalize --out`（写しを直す） |
 | `fml_summary` | ① | 出す | 出す | ○ | `{ workspaceId, path, field? }` | 要約（ランク順）、封筒、`fieldcodes`、`digest` | — | `summary` |
 | `fml_normalize` | ① | 出す | 出す | ○ | `{ workspaceId, path, fields?, check?, profile?, users?, timeoutSec? }` | `findings`、`summary`、`size`、`checkDiffs` | — | `normalize` / `--check` |
-| `fml_calc` | ① | 出す | 出す | ○（模擬） | `{ workspaceId, path, records（1〜10）, app?, fields?, profile?, users?, user?, event?, action?, status?, nextStatus?, mobile?, all?, timeoutSec? }` | レコードごとの項目の前後の値（変わった項目と印のある項目。300 行 / 64 KiB で打ち切り）、エラー、`contextLine`、`notice`、`note` | — | `calc` |
+| `fml_calc` | ① | 出す | 出す | ○（模擬） | `{ workspaceId, path, records（1〜10）, app?, fields?, profile?, users?, user?, event?, action?, status?, nextStatus?, mobile?, all?, timeoutSec? }` | レコードごとの項目の前後の値（変わった項目と印のある項目。1 レコード 300 行、1 つの値 2,000 文字、エラー 20 件 / 300 文字、応答全体（structuredContent = ok / status / findings / result の JSON。content の文はその整形版）64 KiB で打ち切り。打ち切りの finding も含めて測る）、エラー、`contextLine`、`notice`、`note` | — | `calc` |
 | `fml_fields` | ① | 出す | 出す | — | `{ workspaceId, app, profile?, preview?, lang? }` | 要約（1 項目 1 行。○ = 計算式を設定できる型）、一覧の数、ルックアップ先の数 | `kintone/<profile>/<アプリ>/fields.json`（フォルダーが無ければ印を置いて作る） | `fields` + `--summary` |
 | `fml_record` | ① | 出す | 出す | — | `{ workspaceId, app, id, profile?, fieldsFrom? }` | 形の要約だけ（値は返さない） | `kintone/<profile>/<アプリ>/records/<番号>.json`（0o600。フォルダーが無ければ「先に `fml_fields`」） | `record` + `--summary` |
 | `fml_users` | ① | 出す | 出す | — | `{ workspaceId, profile?, onlyReferenced?, maxCalls?, file? }` | 件数（ユーザー / 組織 / グループ）、呼び出し数、要約（人数だけ） | `users/<ホスト>.json`（0o600） | `users --pull` / `--summary` |

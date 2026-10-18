@@ -7,4 +7,4 @@
 5. **calc と差** — `fml_calc` で値を確かめ、`fml_diff`（before = ダウンロード / pull、after = -edit.json）を利用者に見せる
 6. **反映方法** — howto-new の 7 と同じ。取り込み方は「項目の置換」で、変えた項目だけチェックしてもらう（共通の設定を変えていなければ「共通の設定」のチェックを外す）。反映したら、次の `fml_pull`（またはダウンロード → `fml_take`）が新しい今の設定になり、写し（-edit.json）は消してよいと伝える（消すかは利用者が決めて利用者が消す）
 
-接続のファイルが無いとき（`fml_workspace_status` の mode が not-configured）は、利用者に設定画面のダウンロードを `settings/` に置いてもらい、同じ名前では直さず写し（`settings/APP<番号>-<アプリ名>-edit.json` を `fml_save_settings` で作る）を `fml_update_fields` で直す。
+接続のファイルが無いとき（`fml_workspace_status` の mode が not-configured）は、`fml_pull` / `fml_take` / `fml_edit` は使えない。利用者に設定画面のダウンロードを `settings/` に置いてもらい（`fml_files` で名前を見る。`fml_summary` で中身）、そのファイルは直さず、写しを `fml_save_settings` で作る（path は `settings/APP<番号>-<アプリ名>-直し.json` のように、ダウンロードの名前でも `-edit.json` でもない名前。content はダウンロードと同じ封筒。fields は利用者が置いた `fields/<番号>.json`）→ 写しを `fml_summary`（digest）→ `fml_update_fields` で直す → `fml_calc`（records は `records/<番号>-<レコード番号>.json`。fml_record は使えないので利用者が置く）→ `fml_diff`（ダウンロードと写し）。

@@ -51,7 +51,7 @@ test("ツールの一覧と入力の厳しいスキーマ（additionalProperties
   try {
     const st = sc(await s2.call("fml_status", {}));
     assert.deepEqual([st.status, st.result.ready, st.result.capabilities.authoring.ready, st.result.capabilities.kintone], ["ok", false, true, { ready: false, code: "not-configured" }]);
-    assert.match(st.result.next.join("\n"), /kintone を使うツール（fml_fields など）には、\/config で formula の「kintone の接続のファイル」/);
+    assert.match(st.result.next.join("\n"), /kintone を使うツール（fml_fields など）には、\/config で formula の「計算式プラグインの接続のファイル（kintone）」/);
   } finally {
     await s2.close();
   }

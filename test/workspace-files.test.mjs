@@ -3,7 +3,7 @@
 // アプリのフォルダー（kintone/<profile>/<番号>-<アプリ名>/）を使うのは、kintone の接続のファイルがあるときだけ
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import * as core from "@rex0220/formula-authoring-tools/core";
@@ -118,6 +118,32 @@ test("pull: API ラボが無効（404）なら failed と案内。同じ日時�
     await s.close();
     conn.cleanup();
     rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("kintone/ が作業フォルダーの外を指す symlink なら、一覧しない（名前も返さない）。settings/ の一覧は動く", { skip }, async () => {
+  const root = makeWorkspace();
+  const conn = makeConn();
+  const outside = realpathSync(mkdtempSync(path.join(os.tmpdir(), "fml-mcp-outside-")));
+  mkdirSync(path.join(outside, "dev", "2305-SECRET-FOLDER-NAME"), { recursive: true });
+  writeFileSync(path.join(outside, "dev", "2305-SECRET-FOLDER-NAME", "SECRET-FILE.json"), "{}");
+  symlinkSync(outside, path.join(root, "kintone"));
+  const s = await connectClaudeCode([root], connEnv(conn.file), { mockFetch: true });
+  try {
+    const byApp = sc(await s.call("fml_files", { workspaceId: root, app: 2305 }));
+    assert.notEqual(byApp.status, "ok");
+    const all = sc(await s.call("fml_files", { workspaceId: root }));
+    assert.equal(all.status, "ok");
+    assert.ok("problem" in all.result.kintone || !JSON.stringify(all.result.kintone).includes("SECRET"), JSON.stringify(all.result.kintone));
+    const ws = sc(await s.call("fml_workspace_status", { workspaceId: root }));
+    assert.equal(ws.status, "ok");
+    assert.ok(!s.output().includes("SECRET-FOLDER-NAME") && !s.output().includes("SECRET-FILE"), "外の名前を返さない");
+    assert.ok(!s.output().includes(outside), "外のパスを返さない");
+  } finally {
+    await s.close();
+    conn.cleanup();
+    rmSync(root, { recursive: true, force: true });
+    rmSync(outside, { recursive: true, force: true });
   }
 });
 

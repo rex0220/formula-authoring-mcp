@@ -46,7 +46,7 @@ export function registerSaveSettings(server: McpServer, ctx: ServerContext): voi
             { root: w.root, mode: w.mode, policy: w.policy, source: w.source, run: w.run(), baseUrl: baseUrl.baseUrl, usersSource: users.src, usersOrigin: users.origin },
             { path: input.path, content: input.content, fields: input.fields, expectedAbsent: input.expectedAbsent }
           );
-          return fromSaveResult(r, baseUrlFields(baseUrl));
+          return fromSaveResult(r, baseUrlFields(baseUrl), ctx.surface);
         } catch (e) {
           return fromError(e);
         }

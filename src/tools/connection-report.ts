@@ -17,7 +17,7 @@ export interface ConnectionProblem {
 export function connectionGuide(surface: Surface): string {
   return surface === "desktop"
     ? "拡張機能の設定で「kintone の接続のファイル」を選ぶ（kSQL の ksql.config.json と同じ形。作業フォルダーの外に置く）"
-    : "/config で formula の「kintone の接続のファイル」に絶対パスを入れて /mcp で再接続する（kSQL の ksql.config.json と同じ形。作業フォルダーの外に置く）";
+    : "/config で formula の「計算式プラグインの接続のファイル（kintone）」に絶対パスを入れて /mcp で再接続する（kSQL の ksql.config.json と同じ形。作業フォルダーの外に置く。.env ではない）";
 }
 
 /** 接続の誤りを決まった形に（文は中核の決まった文。念のため絶対パスなどを除く） */

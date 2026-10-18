@@ -10,7 +10,8 @@ import { z } from "zod";
 import { WorkspaceError } from "../binding.ts";
 import { ConnectionError, LEGACY_WORKSPACE_FILE, PathError, appFoldersOf, hasLegacyConfig, unusedProfileDirs, type ConnectionSet, type WorkspaceMode } from "../core.ts";
 import type { ServerContext } from "../context.ts";
-import { failure, ok, sanitizeMessage, unexpected } from "../result.ts";
+import { failure, ok, sanitizeMessage } from "../result.ts";
+import { fromError } from "./files.ts";
 import { workspaceIdSchema } from "./common.ts";
 import { connectionDetail, connectionNext, problemOf, type ConnectionProblem } from "./connection-report.ts";
 import { zipReport } from "./zip-report.ts";
@@ -57,7 +58,7 @@ export function registerWorkspaceStatus(server: McpServer, ctx: ServerContext): 
         root = ctx.binding.resolve(input.workspaceId);
       } catch (e) {
         if (e instanceof WorkspaceError) return failure("denied", "WorkspaceError", e.message);
-        return unexpected(e);
+        return fromError(e);
       }
       try {
         const next: string[] = [];
@@ -111,7 +112,7 @@ export function registerWorkspaceStatus(server: McpServer, ctx: ServerContext): 
           pluginZip: zip.report
         });
       } catch (e) {
-        return unexpected(e);
+        return fromError(e);
       }
     }
   );

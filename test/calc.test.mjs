@@ -3,9 +3,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { RECORD_TEXT, SKIP as skip, connectClaudeCode, makeWorkspace, saveInput, sc, settings } from "./helpers.mjs";
+import { RECORD_TEXT, SKIP as skip, connEnv, connectClaudeCode, makeConn, makeWorkspace, saveInput, sc, settings } from "./helpers.mjs";
 
 const sha = (file) => createHash("sha256").update(readFileSync(file)).digest("hex");
 const rowsJson = (...rows) => JSON.stringify(rows);
@@ -41,6 +41,8 @@ test("fml_summary → fml_update_fields → fml_normalize（check）→ fml_calc
     assert.deepEqual([stale.status, stale.error.code], ["conflict", "ConflictError"]);
     const unknown = sc(await s.call("fml_update_fields", { workspaceId: root, path: "settings/APP2305-テーブル内集計.json", expectedDigest: up.digest, rows: rowsJson({ fieldcode: "存在しない", rank: 1 }) }));
     assert.deepEqual([unknown.status, unknown.error.code], ["invalid", "InputError"]);
+    const notCommon = sc(await s.call("fml_update_fields", { workspaceId: root, path: "settings/APP2305-テーブル内集計.json", expectedDigest: up.digest, rows: rowsJson({ fieldcode: "金額合計", rank: 1 }), common: JSON.stringify({ pluginFoo: 1 }) }));
+    assert.deepEqual([notCommon.status, notCommon.error.code], ["invalid", "InputError"], "共通の設定でないキー（COMMON_KEYS の外）");
     const badFormula = sc(await s.call("fml_update_fields", { workspaceId: root, path: "settings/APP2305-テーブル内集計.json", expectedDigest: up.digest, rows: rowsJson({ fieldcode: "金額合計", formulaSet: "不明な項目 + 1" }) }));
     assert.deepEqual([badFormula.status, badFormula.error.code], ["invalid", "NormalizeError"]);
     assert.equal(sha(file), up.digest, "invalid ではファイルを変えない");
@@ -102,6 +104,83 @@ test("fml_calc: normalize のエラーがあれば計算しない（invalid）�
     assert.equal(n.status, "invalid");
   } finally {
     await s.close();
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("fml_calc: 応答全体を 64 KiB に収める（長い値は切る、行は減らす）。レコード番号は重複を除く", { skip }, async () => {
+  const root = makeWorkspace();
+  mkdirSync(path.join(root, "records"));
+  const rec = JSON.parse(RECORD_TEXT);
+  // 商品（テーブルの子の文字列）に 50,000 文字の値を 4 行分
+  for (const row of rec.record.テーブル.value) row.value.商品.value = "長".repeat(50000);
+  writeFileSync(path.join(root, "records", "2305-7.json"), JSON.stringify(rec));
+  // 10 件（番号 7〜16）に同じ中身を置き、全項目を返させる = 切った後の値（2,000 文字 × 4 行 × 10 件）でも上限を超え、全体の打ち切りが必ず動く（Codex の r3 レビュー N2）
+  for (let id = 8; id <= 16; id++) writeFileSync(path.join(root, "records", `2305-${id}.json`), JSON.stringify({ ...rec, id, record: { ...rec.record, $id: { type: "__ID__", value: String(id) } } }));
+  const s = await connectClaudeCode([root]);
+  try {
+    assert.equal(sc(await s.call("fml_save_settings", saveInput(root, "settings/a.json"))).status, "ok");
+    const r = await s.call("fml_calc", { workspaceId: root, path: "settings/a.json", records: [7, 8, 9, 10, 11, 12, 13, 14, 15, 16], all: true });
+    const c = sc(r);
+    assert.equal(c.status, "ok", JSON.stringify(c).slice(0, 300));
+    assert.equal(c.result.records.length, 10);
+    const dup = sc(await s.call("fml_calc", { workspaceId: root, path: "settings/a.json", records: [7, 7] }));
+    assert.equal(dup.result.records.length, 1, "重複は 1 つにする");
+    assert.ok(Buffer.byteLength(JSON.stringify(c), "utf8") <= 64 * 1024, "structuredContent 全体（打ち切りの finding を含む）が上限の中");
+    assert.ok(c.findings.some((f) => f.rule === "truncated"), "全体の打ち切りが動いた");
+    assert.ok(c.result.records.some((x) => (x.linesOmitted ?? 0) > 0), "行を減らした");
+    assert.ok(typeof r.content[0].text === "string" && r.content[0].text.length > 0, "content にも同じ中身");
+    const one = sc(await s.call("fml_calc", { workspaceId: root, path: "settings/a.json", records: [7] }));
+    assert.ok(Buffer.byteLength(JSON.stringify(one), "utf8") <= 64 * 1024);
+    assert.ok(JSON.stringify(one).includes("文字を切った") || one.findings.some((f) => f.rule === "truncated"), "切ったことが分かる");
+  } finally {
+    await s.close();
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("Worker の中の想定外の例外（壊れた項目定義で中核が TypeError。文に値が入る）: 文を返さない（種類だけ）。fml_normalize も fml_save_settings も（Codex の r2 レビュー R1）", { skip }, async () => {
+  const root = makeWorkspace();
+  // 項目の定義が null だと中核の normalize（項目定義の組み立て）が TypeError を投げる（生の文 "Cannot set properties of null (setting 'ptcode')"）
+  const orig = JSON.parse(readFileSync(path.join(root, "fields", "2305.json"), "utf8"));
+  const broken = { ...orig, properties: { ...orig.properties, 金額合計: null } };
+  writeFileSync(path.join(root, "fields", "2305.json"), JSON.stringify(broken));
+  const s = await connectClaudeCode([root]);
+  try {
+    const saved = sc(await s.call("fml_save_settings", saveInput(root, "settings/a.json")));
+    assert.equal(saved.status, "failed", JSON.stringify(saved));
+    assert.ok(!saved.error.message.includes(root) && !/Cannot|ptcode|null/.test(saved.error.message), `生の文を返さない: ${saved.error.message}`);
+    assert.match(saved.error.message, /想定外の誤り/);
+    assert.ok(!existsSync(path.join(root, "settings", "a.json")), "保存しない");
+    mkdirSync(path.join(root, "settings"), { recursive: true });
+    writeFileSync(path.join(root, "settings", "b.json"), settings());
+    const norm = sc(await s.call("fml_normalize", { workspaceId: root, path: "settings/b.json" }));
+    assert.equal(norm.status, "failed", JSON.stringify(norm));
+    assert.ok(!/Cannot|ptcode|null/.test(norm.error.message), norm.error.message);
+    assert.deepEqual([norm.error.code], ["TypeError"], "種類は返す");
+    assert.ok(!s.output().includes("Cannot set"), "標準エラーにも文を出さない");
+  } finally {
+    await s.close();
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("fml_calc: 接続のファイルの baseUrl がとても長くても（固定の部分）、contextBaseUrl は 300 文字までで応答は上限の中（Codex の r4 レビュー M1）", { skip }, async () => {
+  const root = makeWorkspace();
+  mkdirSync(path.join(root, "records"));
+  writeFileSync(path.join(root, "records", "2305-7.json"), RECORD_TEXT);
+  const huge = `https://${"a".repeat(70000)}.cybozu.com`;
+  const conn = makeConn({ defaultProfile: "big", profiles: { big: { baseUrl: huge, tokenMap: { APP2305: "TEST-big-not-a-real-token" } } } });
+  const s = await connectClaudeCode([root], connEnv(conn.file));
+  try {
+    assert.equal(sc(await s.call("fml_save_settings", saveInput(root, "settings/a.json"))).status, "ok");
+    const c = sc(await s.call("fml_calc", { workspaceId: root, path: "settings/a.json", records: [7], profile: "big" }));
+    assert.equal(c.status, "ok", JSON.stringify(c).slice(0, 300));
+    assert.ok(c.result.contextBaseUrl.length <= 301, "接続先は 300 文字まで");
+    assert.ok(Buffer.byteLength(JSON.stringify(c), "utf8") <= 64 * 1024, "応答が上限の中");
+  } finally {
+    await s.close();
+    conn.cleanup();
     rmSync(root, { recursive: true, force: true });
   }
 });

@@ -98,7 +98,7 @@ export function failure(status: Exclude<Status, "ok">, code: string, message: st
 
 /** 想定外の誤りを failed に（誤りの種類はクラスの名前。文は中核の決まった文。秘密の値を含まない） */
 export function unexpected(e: unknown): ToolResult {
-  const err = e instanceof Error ? e : new Error(String(e));
-  const code = err.name && err.name !== "Error" ? err.name : err.constructor?.name ?? "Error";
-  return failure("failed", code, err.message);
+  // 種類は組み込みの Error の名前だけ（name / constructor.name は使わない）。文は返さない（値やパスを含みうる。Codex の r2 / r5 レビュー）
+  const code = e instanceof TypeError ? "TypeError" : e instanceof RangeError ? "RangeError" : e instanceof ReferenceError ? "ReferenceError" : e instanceof SyntaxError ? "SyntaxError" : "Error";
+  return failure("failed", code, `想定外の誤り（${code}）。誤りの文は値やパスを含みうるので返さない。fml_status で状態を確かめ、直らなければ利用者に伝える`);
 }

@@ -5,7 +5,7 @@
 import { z } from "zod";
 import { WorkspaceError, type Surface } from "../binding.ts";
 import { buildProblem, zipProblem } from "../compat.ts";
-import { PluginZipError, loadPolicy, type Engine, type EvalSource, type Policy, type RunOptions, type SaveResult, type WorkspaceMode } from "../core.ts";
+import { PluginZipError, loadPolicy, type Engine, type EvalSource, type PluginZipErrorCode, type Policy, type RunOptions, type SaveResult, type WorkspaceMode } from "../core.ts";
 import { zipGuide, zipOf, type ServerContext } from "../context.ts";
 import { failure, ok, type Finding, type ToolResult } from "../result.ts";
 import { describeZipError } from "../zip-error.ts";
@@ -47,7 +47,8 @@ export async function prepare(ctx: ServerContext, workspaceId: string | undefine
   const incompatible = incompatibleResult();
   if (incompatible) return incompatible;
   const zip = zipOf(ctx, root);
-  if (zip.problem) return failure("failed", "PluginZipError", `計算式プラグインの zip の設定が読めない: ${zip.problem}`);
+  // 設定の値の誤りの文（パスを含みうる）は返さない。中身は fml_status の pluginZip.problem（パスをファイル名にしたもの）で
+  if (zip.problem) return failure("failed", "PluginZipError", `計算式プラグインの zip の設定が読めない（設定元: ${zip.source}）。fml_status で確かめる。${zipGuide(ctx.surface)}`);
   if (!zip.zip) return failure("failed", "PluginZipError", `計算式プラグインの zip が未設定。${zipGuide(ctx.surface)}`);
   let engine: Engine;
   try {
@@ -86,8 +87,11 @@ const DEFAULT_CODE: Record<Exclude<SaveResult["status"], "ok">, string> = {
   failed: "Error"
 };
 
-/** 中核の SaveResult を応答に（確定の後に片付けられなかったときは ok に cleanup と note を添える。extra は ok の応答に足す値） */
-export function fromSaveResult(r: SaveResult, extra: Record<string, unknown> = {}): ToolResult {
+/**
+ * 中核の SaveResult を応答に（確定の後に片付けられなかったときは ok に cleanup と note を添える。extra は ok の応答に足す値）。
+ * 中核の文は決まった文（Worker の中の想定外の例外は種類だけ。save.ts の safeMessageOf）。zip の誤りは種類ごとの決まった文に（パスを含まない）
+ */
+export function fromSaveResult(r: SaveResult, extra: Record<string, unknown> = {}, surface: Surface = "claude-code"): ToolResult {
   const findings = r.findings as unknown as Finding[];
   if (r.status === "ok") {
     return ok(
@@ -95,5 +99,6 @@ export function fromSaveResult(r: SaveResult, extra: Record<string, unknown> = {
       { findings, digest: r.digest }
     );
   }
-  return failure(r.status, r.code ?? DEFAULT_CODE[r.status], r.message ?? r.status, findings);
+  const message = r.code === "PluginZipError" && r.zipCode ? describeZipError(new PluginZipError(r.message ?? "", r.zipCode as PluginZipErrorCode, {}), surface).text : r.message ?? r.status;
+  return failure(r.status, r.code ?? DEFAULT_CODE[r.status], message, findings);
 }
