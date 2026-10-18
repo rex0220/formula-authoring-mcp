@@ -2,6 +2,12 @@
 
 formula MCP（Claude Desktop の拡張機能「計算式 設定オーサリング（Formula）」と、Claude Code のプラグイン `formula`）の、利用者に見える変更です。新しい版が上です。
 
+## 0.3.3（未公開）
+
+中核は 0.4.1 のまま。資料と手順の版（テンプレート formula-authoring 4e85a6a）。
+
+- 雛形（sample-settings）の各種設定を写さない: 雛形の `pluginMiscInfo` はテスト用アプリ 2305 のエクスポートのまま（`circular_refer: true`、`userInfo: false`）で、AI が写した新しい設定を取り込むと「循環参照を許可」が ON、「ユーザー情報」が OFF になっていた（Claude Desktop での確認で、AI は警告で伝えていた）。雛形の `userInfo` を既定（true）に戻し、手順（howto-new、constraints、sample-settings の章の題）に「各種設定は写さない。自己参照の式を使うときだけ `circular_refer: true` を書いて利用者に伝える」（雛形は自己参照の式があるので `circular_refer: true` のまま）
+
 ## 0.3.2（2026-10-18）
 
 中核は `@rex0220/formula-authoring-tools` 0.4.1、資料はテンプレート formula-authoring 7f35486。Claude Desktop での記事の確認で見つけたこと（2026-10-18）。

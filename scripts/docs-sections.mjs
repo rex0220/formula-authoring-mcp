@@ -18,5 +18,5 @@ export const DOC_SECTIONS = [
   { key: "spec", title: "設定ファイル仕様（封筒、共通の設定、項目の行、上限）", ref: "docs/設定ファイル仕様.md" },
   { key: "function-list", title: "関数一覧（大きい。query に関数名）", ref: "docs/関数一覧.md" },
   { key: "test-users", title: "既定のテストデータ（架空のユーザー・組織・グループ）", ref: "docs/既定のテストデータ.md" },
-  { key: "sample-settings", title: "雛形: 封筒形式の設定（新しい設定はこれを写す）", ref: "samples/settings-source.json" }
+  { key: "sample-settings", title: "雛形: 封筒形式の設定（新しい設定はこれを写す。各種設定 pluginMiscInfo は写さない）", ref: "samples/settings-source.json" }
 ];

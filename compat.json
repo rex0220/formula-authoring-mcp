@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "runtimeChecks": {
-    "mcpVersion": "0.3.2",
+    "mcpVersion": "0.3.3",
     "coreVersion": ">=0.4.1 <0.5.0",
     "coreApiVersion": 2,
-    "docsRevision": "7f35486",
+    "docsRevision": "4e85a6a",
     "authoringApiVersions": [
       1
     ],

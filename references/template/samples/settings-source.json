@@ -39,7 +39,7 @@
   "pluginMiscInfo": {
     "circular_refer": true,
     "async": true,
-    "userInfo": false,
+    "userInfo": true,
     "calcStep1": true,
     "calcTable": true,
     "calcStep2": true,
