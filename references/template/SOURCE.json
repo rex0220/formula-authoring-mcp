@@ -1,19 +1,19 @@
 {
   "repository": "rex0220/formula-authoring",
-  "commit": "359fef29ef7769c30d79dcc0053f20a9ab4725d7",
-  "short": "359fef2",
+  "commit": "ce8d687f47fefb0e4a23cf4fd236a734270822ae",
+  "short": "ce8d687",
   "dirty": false,
-  "copiedAt": "2026-10-18T08:58:13.503Z",
+  "copiedAt": "2026-10-18T11:13:41.324Z",
   "files": [
     {
       "path": "docs/計算パターン.md",
-      "bytes": 25753,
-      "sha256": "3647d1ca0f9445468c7c5c77f1106921361c4da81f72b116c40d1bb965970048"
+      "bytes": 27751,
+      "sha256": "c96236473677a5cf5be0e40227b96998a168666ce6eee655cf648a59f5090b2d"
     },
     {
       "path": "docs/計算パターン_検証.md",
-      "bytes": 52069,
-      "sha256": "69e355837ad23bdaf05658877e58a8a6c3b02fbd12c0e2feaaec0533ced8e596"
+      "bytes": 54938,
+      "sha256": "2f9d74344009764a001742490d8e2e418901fe27bc3d802810d6fdcd48c973d4"
     },
     {
       "path": "docs/設定ファイル仕様.md",
