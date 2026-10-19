@@ -148,3 +148,18 @@ test("fml_try: ボタンのクリックの模擬（click: true。MCP 0.3.0）。
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+test("fml_try: 長いテーブルの値は行の切れ目で切り、valueRowsOmitted に省いた行の数（MCP 0.3.6）", { skip }, async () => {
+  const root = makeWorkspace();
+  const s = await connectClaudeCode([root]);
+  try {
+    const r = sc(await s.call("fml_try", { workspaceId: root, records: [1], formulas: [{ formula: "100", as: "テーブル1" }] }));
+    assert.equal(r.status, "ok", JSON.stringify(r).slice(0, 300));
+    const v = r.result.results[0].values[0];
+    assert.ok(Array.isArray(v.value), "行の配列のまま");
+    assert.ok(v.valueRowsOmitted > 0 && v.value.length + v.valueRowsOmitted === 100, `${v.value.length} + ${v.valueRowsOmitted}`);
+    assert.ok(JSON.stringify(v.value).length <= 16000);
+  } finally {
+    await s.close();
+  }
+});

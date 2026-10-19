@@ -231,3 +231,27 @@ test("fml_calc: ボタンのクリックの模擬（click。MCP 0.3.0）: 計算
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+test("fml_calc: 長いテーブルは行の切れ目で切り、省いた行の数を返す（JSON の配列のまま。MCP 0.3.6）", { skip }, async () => {
+  const root = makeWorkspace();
+  mkdirSync(path.join(root, "records"));
+  const rec = JSON.parse(RECORD_TEXT);
+  const row = rec.record.テーブル.value[0];
+  // 結果のテーブルの値は式のある子だけ（1 行 120 字ほど）。300 行で上限 16,000 字を超える
+  rec.record.テーブル.value = Array.from({ length: 300 }, (_, i) => ({ ...row, id: String(1000 + i) }));
+  writeFileSync(path.join(root, "records", "2305-7.json"), JSON.stringify(rec));
+  const s = await connectClaudeCode([root]);
+  try {
+    assert.equal(sc(await s.call("fml_save_settings", saveInput(root, "settings/a.json"))).status, "ok");
+    const c = sc(await s.call("fml_calc", { workspaceId: root, path: "settings/a.json", records: [7], all: true }));
+    assert.equal(c.status, "ok", JSON.stringify(c).slice(0, 300));
+    const line = c.result.records[0].lines.find((l) => l.fieldcode === "テーブル");
+    assert.ok(line, "テーブルの行がある");
+    assert.ok(Array.isArray(line.after), "行の配列のまま（文字列にしない）");
+    assert.ok(line.afterRowsOmitted > 0 && line.after.length + line.afterRowsOmitted === 300, `${line.after.length} + ${line.afterRowsOmitted}`);
+    assert.ok(JSON.stringify(line.after).length <= 16000);
+  } finally {
+    await s.close();
+    rmSync(root, { recursive: true, force: true });
+  }
+});

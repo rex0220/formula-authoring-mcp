@@ -13,7 +13,7 @@
 | `denied` | 作業フォルダーの外、未登録の作業フォルダー、書けない場所、ダウンロード / pull のファイル、接続のファイルに無い profile のフォルダー、接続のファイルが無いときの kintone/ | 回り道をしない（ほかのツールでファイルを消す・書き換えない）。利用者に伝える |
 | `failed` | 計算式プラグインの zip が無い・読めない、接続のファイルの誤り、kintone の通信の失敗、評価の時間切れ、想定外の失敗 | `fml_status` / `fml_workspace_status` で状態を確かめ、利用者に伝える |
 
-`findings` の `level` は `error` / `warning` / `info`。**警告は保存を止めないが、消さずに利用者に伝える**。`truncated` は返す量の上限で打ち切ったことを示す。
+`findings` の `level` は `error` / `warning` / `info`。**警告は保存を止めないが、消さずに利用者に伝える**。`truncated` は返す量の上限で打ち切ったことを示す。`fml_calc` / `fml_try` の値は 1 つ 16,000 字まで。長いテーブルは行の切れ目で切り、省いた行の数を `afterRowsOmitted` / `beforeRowsOmitted`（`fml_calc` の項目の前後）、`valueRowsOmitted`（`fml_try` の値）に返す（返った行は JSON の配列のまま読める）。テーブル以外の長い値は先頭を残して「…（N 文字を切った）」。**省いた行があることを利用者に伝え、確かめた行（先頭の何行）を書く**
 
 ## normalize の結果（規則名は findings の `rule`）
 

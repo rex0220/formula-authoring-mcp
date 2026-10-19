@@ -102,3 +102,36 @@ export function fromSaveResult(r: SaveResult, extra: Record<string, unknown> = {
   const message = r.code === "PluginZipError" && r.zipCode ? describeZipError(new PluginZipError(r.message ?? "", r.zipCode as PluginZipErrorCode, {}), surface).text : r.message ?? r.status;
   return failure(r.status, r.code ?? DEFAULT_CODE[r.status], message, findings);
 }
+
+/** 1 つの値（before / after / value を JSON にしたもの）の長さの上限（文字）。MCP 0.3.6 で 2,000 → 16,000（テーブル自身の式で作れる 100 行が収まる。応答全体の 64 KiB はそのまま） */
+export const MAX_VALUE_CHARS = 16000;
+
+/**
+ * 長い値を切る。テーブル（行の配列）は行の切れ目で切り、省いた行の数を返す（JSON として読めるまま。MCP 0.3.6）。
+ * 1 行目だけで上限を超えるとき・配列でない値は、今までどおり JSON の文字列の先頭を残して印を付ける
+ */
+export function cutValueRows(v: unknown): { value: unknown; rowsOmitted?: number } {
+  const s = typeof v === "string" ? v : JSON.stringify(v);
+  if (s === undefined || s.length <= MAX_VALUE_CHARS) return { value: v };
+  if (Array.isArray(v)) {
+    const kept: unknown[] = [];
+    let len = 2;
+    for (const row of v) {
+      const n = JSON.stringify(row)?.length ?? 4;
+      if (len + n + 1 > MAX_VALUE_CHARS) break;
+      kept.push(row);
+      len += n + 1;
+    }
+    if (kept.length > 0) return { value: kept, rowsOmitted: v.length - kept.length };
+  }
+  return { value: `${s.slice(0, MAX_VALUE_CHARS)}…（${s.length.toLocaleString()} 文字を切った）` };
+}
+
+export const cutValue = (v: unknown): unknown => cutValueRows(v).value;
+
+/** 項目の前後の値を切る（テーブルを行の切れ目で切ったら beforeRowsOmitted / afterRowsOmitted に省いた行の数） */
+export function cutLine<T extends { before: unknown; after: unknown }>(l: T): T & { beforeRowsOmitted?: number; afterRowsOmitted?: number } {
+  const b = cutValueRows(l.before);
+  const a = cutValueRows(l.after);
+  return { ...l, before: b.value, after: a.value, ...(b.rowsOmitted ? { beforeRowsOmitted: b.rowsOmitted } : {}), ...(a.rowsOmitted ? { afterRowsOmitted: a.rowsOmitted } : {}) };
+}

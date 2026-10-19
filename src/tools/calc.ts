@@ -11,7 +11,7 @@ import { z } from "zod";
 import { EVENT_RE, InputError, readJsonLimited, validateEvent, type CalcLine, type CalcRecordResult, type ClickResult, type KintoneRecord } from "../core.ts";
 import type { ServerContext } from "../context.ts";
 import { failure, ok, type Finding } from "../result.ts";
-import { isToolResult, prepare, workspaceIdSchema } from "./common.ts";
+import { cutLine, cutValue, isToolResult, prepare, workspaceIdSchema } from "./common.ts";
 import { evalTargetOf, jobOf, runJob } from "./eval.ts";
 import { baseUrlFields, checkRelPaths, folderOf, fromError, recordFileFor, rel, withJsonError } from "./files.ts";
 import { profileSchema } from "./kintone.ts";
@@ -24,18 +24,11 @@ export const MAX_RECORDS = 10;
 const MAX_LINES = 300;
 const MAX_ERRORS = 20;
 const MAX_SINKS = 20;
-/** 1 つの値（before / after を JSON にしたもの）とエラーの文の長さの上限（文字） */
-const MAX_VALUE_CHARS = 2000;
+/** エラーの文の長さの上限（文字）。値の長さの上限は common.ts の MAX_VALUE_CHARS */
 const MAX_ERROR_CHARS = 300;
 /** 応答全体（result + findings を JSON にしたもの）の大きさの上限（バイト。Codex のレビュー MAJOR 5） */
 const MAX_RESULT_BYTES = 64 * 1024;
 
-/** 長い値を切る（文字列はそのまま、ほかは JSON にして。切ったときは印を付ける） */
-function cutValue(v: unknown): unknown {
-  const s = typeof v === "string" ? v : JSON.stringify(v);
-  if (s === undefined || s.length <= MAX_VALUE_CHARS) return v;
-  return `${s.slice(0, MAX_VALUE_CHARS)}…（${s.length.toLocaleString()} 文字を切った）`;
-}
 const cutText = (s: string, max: number): string => (s.length > max ? `${s.slice(0, max)}…` : s);
 
 const NOTE = "既存のレコードは変わっていない（模擬）。反映は設定画面で取り込み → 保存 → 運用環境に反映。値を計算する項目を変えたときは、既存レコードを「既存レコードを変更」か「一括計算」で（ボタン・表示だけの変更なら要らない）";
@@ -54,7 +47,7 @@ interface RecordOut {
 }
 
 function shapeClick(c: ClickResult): ClickResult & { changesOmitted?: number } {
-  const changes = c.changes.slice(0, MAX_LINES).map((l) => ({ ...l, before: cutValue(l.before), after: cutValue(l.after) }));
+  const changes = c.changes.slice(0, MAX_LINES).map(cutLine);
   return {
     display: c.display ? (Object.fromEntries(Object.entries(c.display).map(([k, v]) => [k, cutValue(v)])) as Record<string, unknown>) : null,
     changes,
@@ -67,7 +60,7 @@ function shapeClick(c: ClickResult): ClickResult & { changesOmitted?: number } {
 
 function shape(r: CalcRecordResult, all: boolean): RecordOut {
   const picked = all ? r.lines : r.lines.filter((l) => l.changed || l.marks.length > 0);
-  const lines = picked.slice(0, MAX_LINES).map((l) => ({ ...l, before: cutValue(l.before), after: cutValue(l.after) }));
+  const lines = picked.slice(0, MAX_LINES).map(cutLine);
   return {
     id: r.id,
     changed: r.changed,

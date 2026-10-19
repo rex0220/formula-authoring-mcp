@@ -19,15 +19,14 @@ import {
 } from "../core.ts";
 import type { ServerContext } from "../context.ts";
 import { failure, ok, type Finding } from "../result.ts";
-import { isToolResult, prepare, workspaceIdSchema, type WorkContextForTool } from "./common.ts";
+import { cutLine, cutValue, cutValueRows, isToolResult, prepare, workspaceIdSchema, type WorkContextForTool } from "./common.ts";
 import { runJob } from "./eval.ts";
 import { appDirIn, assertReadable, checkRelPaths, fromError, rel, usersSourceFor, withJsonError } from "./files.ts";
 import { profileSchema } from "./kintone.ts";
 import { timeoutSchema } from "./normalize.ts";
 import { usersSchema } from "./save.ts";
 
-/** 1 つの値（JSON にしたもの）と誤りの文の長さの上限（文字） */
-const MAX_VALUE_CHARS = 2000;
+/** 誤りの文の長さの上限（文字）。値の長さの上限は common.ts の MAX_VALUE_CHARS */
 const MAX_MESSAGE_CHARS = 300;
 /** 応答全体（structuredContent の JSON）の上限（バイト） */
 const MAX_RESULT_BYTES = 64 * 1024;
@@ -73,12 +72,12 @@ function appFieldsOf(w: WorkContextForTool, app: number, profile: string | undef
   return { file };
 }
 
-function cutValue(v: unknown): unknown {
-  const s = typeof v === "string" ? v : JSON.stringify(v);
-  if (s === undefined || s.length <= MAX_VALUE_CHARS) return v;
-  return `${s.slice(0, MAX_VALUE_CHARS)}…（${s.length.toLocaleString()} 文字を切った）`;
-}
 const cutText = (s: string, max: number): string => (s.length > max ? `${s.slice(0, max)}…` : s);
+/** 値を切る（テーブルを行の切れ目で切ったら valueRowsOmitted に省いた行の数） */
+const valueOf = (v: unknown): { value: unknown; valueRowsOmitted?: number } => {
+  const c = cutValueRows(v);
+  return { value: c.value, ...(c.rowsOmitted ? { valueRowsOmitted: c.rowsOmitted } : {}) };
+};
 
 function shape(r: TryFormulaResult): TryFormulaResult {
   return {
@@ -86,10 +85,10 @@ function shape(r: TryFormulaResult): TryFormulaResult {
     formula: cutText(r.formula, TRY_MAX_FORMULA_CHARS),
     findings: r.findings.map((f) => ({ ...f, message: cutText(f.message, MAX_MESSAGE_CHARS) })),
     values: r.values.map((v) => ({
-      ...v, value: cutValue(v.value), ...(v.raw !== undefined ? { raw: cutValue(v.raw) } : {}), ...(v.error ? { error: cutText(v.error, MAX_MESSAGE_CHARS) } : {}),
+      ...v, ...valueOf(v.value), ...(v.raw !== undefined ? { raw: cutValue(v.raw) } : {}), ...(v.error ? { error: cutText(v.error, MAX_MESSAGE_CHARS) } : {}),
       ...(v.click ? { click: {
         display: v.click.display ? (Object.fromEntries(Object.entries(v.click.display).map(([k, x]) => [k, cutValue(x)])) as Record<string, unknown>) : null,
-        changes: v.click.changes.map((l) => ({ ...l, before: cutValue(l.before), after: cutValue(l.after) })),
+        changes: v.click.changes.map(cutLine),
         errors: v.click.errors.map((e) => ({ ...e, message: cutText(e.message, MAX_MESSAGE_CHARS) })),
         sinks: v.click.sinks.map((s) => cutText(s, MAX_MESSAGE_CHARS)),
         failed: v.click.failed
