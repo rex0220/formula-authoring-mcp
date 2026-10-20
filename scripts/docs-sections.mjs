@@ -3,11 +3,13 @@
 //   ref:   references/template/（テンプレートの docs/ と samples/ の写し。scripts/sync-references.mjs）
 // 順番が目次の順。キーは英数字（AI が打ち間違えにくく、Desktop のツールの引数でも崩れない）
 export const DOC_SECTIONS = [
+  { key: "navi", title: "使い方ナビ（できること = 計算の種類と記事、使い方の流れ、頼み方の例、今の設定の変え方、AI がしないこと）", ref: "docs/使い方ナビ.md" },
   { key: "howto-new", title: "新しい設定を作る（手順。仕様の確認 → 式 → 保存 → calc）", guide: "howto-new.md" },
   { key: "howto-edit", title: "既存の設定を変える（pull / take → edit → 差し替え → calc → diff）", guide: "howto-edit.md" },
   { key: "requirements", title: "要件を AI が作る（利用者のやりたいことが短いとき）", guide: "requirements.md" },
   { key: "explain", title: "計算式の解説を頼まれたら", guide: "explain.md" },
   { key: "try", title: "式の試し計算（同梱のサンプルアプリ。関数の解説・使用例・式の断片を fml_try で確かめる）", guide: "try.md" },
+  { key: "qa", title: "QA（問題と答え）を作る（答えは fml_try で確かめてから出す）", guide: "qa.md" },
   { key: "test-app", title: "テスト用アプリとテストデータ（kintone への書き込みの唯一の例外）", guide: "test-app.md" },
   { key: "results", title: "結果の読み方（status、normalize のエラー・警告・情報、断る場合）", guide: "results.md" },
   { key: "constraints", title: "計算式の制約（守らないと動かない・壊れる）と計算の順", guide: "constraints.md" },

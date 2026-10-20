@@ -18,6 +18,7 @@ const template = path.resolve(root, args.find((a) => !a.startsWith("--")) ?? "..
 const outDir = path.join(root, "references", "template");
 
 export const FILES = [
+  "docs/使い方ナビ.md",
   "docs/計算パターン.md",
   "docs/計算パターン_検証.md",
   "docs/設定ファイル仕様.md",

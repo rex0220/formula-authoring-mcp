@@ -17,7 +17,7 @@ export function registerDocs(server: McpServer, _ctx: ServerContext): void {
       title: "計算式プラグインの設定づくりの手順と資料",
       description:
         "kintone の計算式プラグイン（rex0220 formula）で、項目の計算式・自動計算・集計（テーブルの合計、小計、分類ごとの集計、行番号、転記、ユーザー情報）の設定を作る・直す・解説するとき、最初に呼ぶ。手順と資料（読み取りだけ）。" +
-        "引数なしで目次（作業の順・決まり・章の一覧）、section でその章、query で資料から探す（関数名、やりたいことの言葉。大きい資料は全部を読まない）。「計算式プラグインの設定」「kintone の計算式を作りたい」「集計したい」と言われたらまずこれ",
+        "引数なしで目次（作業の順・決まり・章の一覧）、section でその章、query で資料から探す（関数名、やりたいことの言葉。大きい資料は全部を読まない）。「計算式プラグインの設定」「kintone の計算式を作りたい」「集計したい」と言われたらまずこれ。使い方・できること・頼み方を聞かれたとき（navi）、QA（問題と答え）を作るとき（qa）も",
       inputSchema: z
         .object({
           section: z.string().min(1).max(60).optional().describe("章の名前（目次の section。例 howto-new、patterns、function-list）"),

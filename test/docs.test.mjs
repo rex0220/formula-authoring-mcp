@@ -7,7 +7,7 @@ import path from "node:path";
 import { ROOT, VERSION, connect, connectClaudeCode } from "./helpers.mjs";
 
 const SOURCE = JSON.parse(readFileSync(path.join(ROOT, "references", "template", "SOURCE.json"), "utf8"));
-const KEYS = ["howto-new", "howto-edit", "requirements", "explain", "try", "test-app", "results", "constraints", "usable", "connections", "patterns", "patterns-verified", "spec", "function-list", "test-users", "sample-settings"];
+const KEYS = ["navi", "howto-new", "howto-edit", "requirements", "explain", "try", "qa", "test-app", "results", "constraints", "usable", "connections", "patterns", "patterns-verified", "spec", "function-list", "test-users", "sample-settings"];
 const textOf = (r) => r.content.map((c) => c.text).join("\n");
 
 test("目次: 1 行目に版、資料の元のコミット、作業の順と決まり（推し量らない、既存のレコードは変わらない）、章の一覧。作業フォルダーが未登録・zip が未設定でも読める。文章だけ", async () => {
@@ -61,6 +61,32 @@ test("章: 手順は丸ごと、大きい資料（関数一覧）は見出しの
     assert.equal(unknown.isError, true);
     assert.equal(unknown.structuredContent.status, "invalid");
     assert.match(unknown.structuredContent.error.message, /howto-new、howto-edit/);
+  } finally {
+    await s.close();
+  }
+});
+
+test("使い方ナビ（navi）と QA（qa。0.3.7）: 目次・指示・fml_docs の説明に案内。navi はテンプレートの使い方ナビ、qa は答えを fml_try で確かめる手順。fml_try を使う場面は 4 か所で同じ（QA を含む）", async () => {
+  const s = await connect(["--surface", "claude-code", "--roots", ""], {});
+  try {
+    const { tools } = await s.client.listTools();
+    const docs = tools.find((t) => t.name === "fml_docs");
+    const tryTool = tools.find((t) => t.name === "fml_try");
+    assert.match(docs.description, /使い方・できること・頼み方を聞かれたとき（navi）、QA（問題と答え）を作るとき（qa）/);
+    const index = textOf(await s.call("fml_docs", {}));
+    assert.match(index, /頼み方・今の設定の変え方を聞かれたら navi。QA（問題と答え）の作成を頼まれたら qa（答えは fml_try で確かめてから出す）/);
+    const instructions = String(s.client.getInstructions?.() ?? "");
+    assert.match(instructions, /聞かれたら fml_docs の navi。QA（問題と答え）の作成を頼まれたら fml_docs の qa/);
+    const navi = textOf(await s.call("fml_docs", { section: "navi" }));
+    for (const h of ["## 1. できること", "## 2. 使い方の流れ", "## 3. 頼み方", "## 4. 今の計算式を変える", "## 5. AI がしないこと"]) assert.ok(navi.includes(h), h);
+    for (const id of ["36b77265b178baf754ef", "dca414a52918fa102c01", "20e782175507fbc941a6", "ae83c6d5ce50ff7a9a73"]) assert.ok(navi.includes(id), `記事 ${id}`);
+    assert.match(navi, /QA を 10 題作って/);
+    const qa = textOf(await s.call("fml_docs", { section: "qa" }));
+    assert.match(qa, /答えは推し量らず、必ず `fml_try` で確かめてから出す/);
+    assert.match(qa, /`fml_try` 1 回で計算する/);
+    const tryGuide = textOf(await s.call("fml_docs", { section: "try" }));
+    const rule = "資料と自分の理解が食い違うとき、QA（問題と答え）を作るとき（答えを確かめる";
+    for (const [name, text] of [["指示", instructions], ["目次", index], ["fml_try の説明", tryTool.description], ["try の章", tryGuide]]) assert.ok(text.includes(rule), `${name} の fml_try を使う場面に QA`);
   } finally {
     await s.close();
   }

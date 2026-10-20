@@ -1,10 +1,15 @@
 {
   "repository": "rex0220/formula-authoring",
-  "commit": "19632d7e6801a7525b77ab6946eaae7d176fd31e",
-  "short": "19632d7",
+  "commit": "3a68d9b92dfe9b35ac41a97bf7297a582e7eeab4",
+  "short": "3a68d9b",
   "dirty": false,
-  "copiedAt": "2026-10-19T00:34:11.729Z",
+  "copiedAt": "2026-10-20T14:28:12.469Z",
   "files": [
+    {
+      "path": "docs/使い方ナビ.md",
+      "bytes": 9972,
+      "sha256": "95c442ac2f6123d4a565d71bba8fc88d82da5bc6e0147ac7434998a38860e1b0"
+    },
     {
       "path": "docs/計算パターン.md",
       "bytes": 37902,
