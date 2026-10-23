@@ -24,6 +24,7 @@ formula MCP は、利用者の PC の上で動き、AI（Claude）が呼ぶツ�
 - **`fml_calc` の結果にはレコードの値が入ります。** 本番のレコードでなく、テスト用アプリとテストデータで確かめてください
 - **Claude Desktop でファイルを扱うほかの拡張機能を有効にしていると**、その経路で接続のファイルや作業フォルダーのレコードの値が AI に渡りえます
 - **スクリーンショットを会話に貼ると**、写った値は AI に渡ります
+- **Node.js の脆弱性は、利用者の PC の Node.js を更新して直します。** formula MCP の配布物に Node.js は入っていません。Claude Desktop では Desktop に同梱の Node.js で動くので、Desktop を最新にしてください。Claude Code では PC の `node` で動くので、サポートが続いている系列（22 以降）の最新の修正版を使ってください（20 系はサポートが終わり、修正が出ません）。kintone との通信には Node.js の `fetch` を使います
 - 範囲の外: 同じ OS の利用者の権限で動くほかのプロセス、検査から書き込みまでの間のリンクの差し替え、OS や Claude のアプリそのものの侵害
 
 中核（`@rex0220/formula-authoring-tools`）の守りの詳細は、[formula-authoring の tools/SECURITY.md](https://github.com/rex0220/formula-authoring/blob/main/tools/SECURITY.md) にあります。

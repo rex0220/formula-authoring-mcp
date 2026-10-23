@@ -7,7 +7,7 @@ kintone の計算式プラグイン（rex0220 formula。Ver.101 以降）の設�
 ## 入れ方
 
 - **Claude Desktop**: [リリース](https://github.com/rex0220/formula-authoring-mcp/releases/latest) から `formula-authoring-<版>.mcpb` をダウンロードしてダブルクリック。設定で、作業フォルダー、計算式プラグインの zip、kintone の接続のファイルを選ぶ（下の「設定項目」と「kintone の接続のファイル」）
-- **Claude Code**（ターミナルの `claude`。Node.js 20 以降）: `/plugin install formula --marketplace rex0220/formula-authoring-mcp`（Claude Code 2.1.275 以降。それより前は `/plugin marketplace add rex0220/formula-authoring-mcp` → `/plugin install formula@rex0220-formula`）。そのあと `/config` で、計算式プラグインの zip と kintone の接続のファイル。作業フォルダーは [formula-authoring](https://github.com/rex0220/formula-authoring) のテンプレートから作ったフォルダーが向く（`docs/` の資料と `.claude/settings.json` の守りがそろう。無くても動く）
+- **Claude Code**（ターミナルの `claude`。Node.js 20 以降。サポートが続いている系列（22 以降）の最新の修正版を勧める。[SECURITY.md](SECURITY.md)）: `/plugin install formula --marketplace rex0220/formula-authoring-mcp`（Claude Code 2.1.275 以降。それより前は `/plugin marketplace add rex0220/formula-authoring-mcp` → `/plugin install formula@rex0220-formula`）。そのあと `/config` で、計算式プラグインの zip と kintone の接続のファイル。作業フォルダーは [formula-authoring](https://github.com/rex0220/formula-authoring) のテンプレートから作ったフォルダーが向く（`docs/` の資料と `.claude/settings.json` の守りがそろう。無くても動く）
 - 計算式プラグインの zip は、アプリに入れたものと同じ版（Ver.101 以降）の、配布元から入手したものを使う。kintone の API トークンは、アプリごとのレコード閲覧だけのものを使う
 - 使い方: チャットで「計算式プラグインで、アプリ 4328 の旅費明細を分類ごとに集計したい」のように頼む。AI は最初に `fml_docs` で手順を読み、項目定義（`fml_fields`）→ 代表のレコード（`fml_record`）→ 仕様の確認 → 設定の保存（`fml_save_settings`）→ 模擬の計算（`fml_calc`）→ 反映方法（設定画面でアップロード）の順に進める。kintone には読み取り（GET）だけで、**設定の反映と既存レコードの再計算は利用者が設定画面で行う**
 
