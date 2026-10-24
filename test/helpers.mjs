@@ -1,20 +1,30 @@
 // 試験の共通: 束ねた formula MCP（dist/server/index.cjs）を MCP のクライアント（SDK v2）で起動して話す（print-craft MCP の test/helpers.mjs を元にした）。
-// 計算式プラグインの zip は環境変数 FORMULA_TEST_PLUGIN_ZIP か、隣の formula の dist/formula-plugin101.zip（無ければ試験を飛ばす）。
+// 計算式プラグインの zip は環境変数 FORMULA_TEST_PLUGIN_ZIP か、隣の formula の dist の formula-plugin<版>.zip で版が 101 以上の一番新しいもの（tools の devPluginZip と同じ。無ければ試験を飛ばす）。
+// 試験は zip の版（PLUGIN_VERSION）と比べ、版を書き込まない（zip を新しい版にしても通るように。2026-10-24 Takashi「OK」）。
 // kintone の接続のファイル（kSQL の ksql.config.json の形）は作業フォルダーの外の一時フォルダーに置く（makeConn）
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { Client } from "@modelcontextprotocol/client";
 import { StdioClientTransport } from "@modelcontextprotocol/client/stdio";
+import { readPluginZip } from "@rex0220/formula-authoring-tools/core";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const ROOT = path.resolve(here, "..");
 export const SERVER = path.join(ROOT, "dist", "server", "index.cjs");
 export const VERSION = JSON.parse(readFileSync(path.join(ROOT, "package.json"), "utf8")).version;
-export const ZIP = process.env.FORMULA_TEST_PLUGIN_ZIP ?? path.resolve(ROOT, "../formula/dist/formula-plugin101.zip");
+function newestPluginZip() {
+  const dist = path.resolve(ROOT, "../formula/dist");
+  if (!existsSync(dist)) return null;
+  const zips = readdirSync(dist).filter((f) => /^formula-plugin(\d+)\.zip$/.test(f) && Number(f.match(/\d+/)[0]) >= 101).sort();
+  return zips.length ? path.join(dist, zips[zips.length - 1]) : null;
+}
+export const ZIP = process.env.FORMULA_TEST_PLUGIN_ZIP ?? newestPluginZip() ?? path.resolve(ROOT, "../formula/dist/formula-plugin101.zip");
 export const SKIP = !existsSync(ZIP) && `計算式プラグインの zip が無い: ${ZIP}（FORMULA_TEST_PLUGIN_ZIP で指定できる）`;
+/** 試験に使う zip の manifest の版（"101"、"102" …） */
+export const PLUGIN_VERSION = existsSync(ZIP) ? readPluginZip(ZIP).pluginVersion : "";
 export const SECRET = "TEST-not-a-real-token-0123456789";
 /** テスト用アプリ 2305（テーブル内集計）の項目定義（fields の出力の形）、設定のダウンロード（Ver.100 の封筒）、合成のレコード 7 */
 export const FIELDS_TEXT = readFileSync(path.join(here, "fixtures", "fields-2305.json"), "utf8");

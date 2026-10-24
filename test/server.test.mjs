@@ -6,7 +6,7 @@ import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { FIELDS_TEXT, SECRET, SKIP as skip, VERSION, ZIP, connEnv, connect, connectClaudeCode, connectDesktop, leakedTokens, makeConn, makeWorkspace, saveInput, sc, settings } from "./helpers.mjs";
+import { FIELDS_TEXT, PLUGIN_VERSION, SECRET, SKIP as skip, VERSION, ZIP, connEnv, connect, connectClaudeCode, connectDesktop, leakedTokens, makeConn, makeWorkspace, saveInput, sc, settings } from "./helpers.mjs";
 
 export const TOOLS = ["fml_docs", "fml_status", "fml_workspace_status", "fml_save_settings", "fml_update_fields", "fml_summary", "fml_normalize", "fml_calc", "fml_try", "fml_fields", "fml_record", "fml_users", "fml_pull", "fml_files", "fml_take", "fml_edit", "fml_diff"];
 
@@ -37,7 +37,7 @@ test("ツールの一覧と入力の厳しいスキーマ（additionalProperties
     assert.equal(st.result.workspace.registered, 1);
     assert.deepEqual(st.result.workspace.names, [path.basename(root)]);
     assert.equal(st.result.pluginZip.source, "設定項目");
-    assert.deepEqual([st.result.pluginZip.readable, st.result.pluginZip.compatible, st.result.pluginZip.pluginVersion, st.result.pluginZip.authoringApiVersion], [true, true, "101", 1], "zip を実際に読む");
+    assert.deepEqual([st.result.pluginZip.readable, st.result.pluginZip.compatible, st.result.pluginZip.pluginVersion, st.result.pluginZip.authoringApiVersion], [true, true, PLUGIN_VERSION, 1], "zip を実際に読む");
     assert.ok(!JSON.stringify(st).includes(root) && !JSON.stringify(st).includes(ZIP) && !JSON.stringify(st).includes(conn.file), "絶対パスを返さない");
     assert.equal(st.result.version, VERSION);
     assert.deepEqual(st.result.capabilities, { authoring: { ready: true }, kintone: { ready: true, fileName: "ksql.config.json", profiles: 3 } });
@@ -81,7 +81,7 @@ test("保存は ok（digest は確定したファイル。settings/ が無くて
     const file = path.join(root, "settings", "APP2305-テーブル内集計.json");
     assert.equal(sc(okR).digest, createHash("sha256").update(readFileSync(file)).digest("hex"));
     const saved = JSON.parse(readFileSync(file, "utf8"));
-    assert.equal(saved.PluginVersion, "101", "normalize が zip の版にする");
+    assert.equal(saved.PluginVersion, PLUGIN_VERSION, "normalize が zip の版にする");
     assert.ok(!("pluginFields" in saved), "派生値は書かない");
     assert.ok(sc(okR).findings.some((f) => f.level === "warning"), "警告（misc.changed など）を返す");
     assert.match(sc(okR).result.summary, /エラー 0/);

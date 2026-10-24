@@ -6,7 +6,7 @@ import { spawnSync } from "node:child_process";
 import { mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { ROOT, SKIP as skip, VERSION, connectClaudeCode, makeWorkspace, saveInput, sc } from "./helpers.mjs";
+import { PLUGIN_VERSION, ROOT, SKIP as skip, VERSION, connectClaudeCode, makeWorkspace, saveInput, sc } from "./helpers.mjs";
 
 const COMPAT = JSON.parse(readFileSync(path.join(ROOT, "compat.json"), "utf8"));
 
@@ -79,7 +79,7 @@ test("計算式プラグインの zip の版が互換表の上限を超えたら
   try {
     const r = sc(await s.call("fml_save_settings", saveInput(root, "settings/a.json")));
     assert.deepEqual([r.status, r.error.code], ["incompatible", "IncompatibleError"]);
-    assert.match(r.error.message, /版 101 は.*Ver\.100 まで/);
+    assert.match(r.error.message, new RegExp(`版 ${PLUGIN_VERSION} は.*Ver\\.100 まで`));
   } finally {
     await s.close();
     rmSync(root, { recursive: true, force: true });

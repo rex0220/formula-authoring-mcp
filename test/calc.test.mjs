@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { RECORD_TEXT, SETTINGS_TEXT, SKIP as skip, connEnv, connectClaudeCode, makeConn, makeWorkspace, saveInput, sc, settings } from "./helpers.mjs";
+import { PLUGIN_VERSION, RECORD_TEXT, SETTINGS_TEXT, SKIP as skip, connEnv, connectClaudeCode, makeConn, makeWorkspace, saveInput, sc, settings } from "./helpers.mjs";
 
 const sha = (file) => createHash("sha256").update(readFileSync(file)).digest("hex");
 const rowsJson = (...rows) => JSON.stringify(rows);
@@ -23,7 +23,7 @@ test("fml_summary → fml_update_fields → fml_normalize（check）→ fml_calc
     const sum = sc(await s.call("fml_summary", { workspaceId: root, path: "settings/APP2305-テーブル内集計.json" }));
     assert.equal(sum.status, "ok", JSON.stringify(sum));
     assert.equal(sum.digest, sha(file));
-    assert.deepEqual([sum.result.appId, sum.result.appName, sum.result.pluginVersion, sum.result.fieldCount], [2305, "テーブル内集計", "101", 6]);
+    assert.deepEqual([sum.result.appId, sum.result.appName, sum.result.pluginVersion, sum.result.fieldCount], [2305, "テーブル内集計", PLUGIN_VERSION, 6]);
     assert.ok(sum.result.fieldcodes.includes("金額合計"));
     assert.match(sum.result.text, /金額合計/);
     assert.doesNotMatch(sum.result.text, /各種設定の既定との差は出していない/);
