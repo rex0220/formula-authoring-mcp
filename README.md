@@ -1,6 +1,6 @@
 # formula-authoring-mcp
 
-kintone の計算式プラグイン（rex0220 formula。Ver.101 以降）の設定 JSON を、検査（normalize）と模擬の計算（calc）を通して作業フォルダーに保存・確認する **formula MCP**（Claude Code のプラグイン `formula` と Claude Desktop の `.mcpb`）。中核は npm の [`@rex0220/formula-authoring-tools/core`](https://www.npmjs.com/package/@rex0220/formula-authoring-tools)（テンプレート [formula-authoring](https://github.com/rex0220/formula-authoring) の tools と同じもの）。設計は formula の `doc/internal/オーサリングツール_実装計画.md` 24 章（非公開）と、[print-craft MCP の実装案](https://github.com/rex0220/print-craft-authoring-mcp/blob/main/docs/プラグイン化の実装案.md)（同じ契約。4 章 作業フォルダーの結び付け、5 章 ツールと入出力、7 章 互換表、15 章 接続のファイル）。
+kintone の計算式プラグイン（rex0220 formula。Ver.101 以降）の設定 JSON を、検査（normalize）と模擬の計算（calc）を通して作業フォルダーに保存・確認する **formula MCP**（0.4.0 から、項目検証プラグイン（rex0220 field validation）Ver.72 以降の設定も `fv_*` のツールで。式は計算式プラグインの zip（Ver.102 以降）で評価する）（Claude Code のプラグイン `formula` と Claude Desktop の `.mcpb`）。中核は npm の [`@rex0220/formula-authoring-tools/core`](https://www.npmjs.com/package/@rex0220/formula-authoring-tools)（テンプレート [formula-authoring](https://github.com/rex0220/formula-authoring) の tools と同じもの）。設計は formula の `doc/internal/オーサリングツール_実装計画.md` 24 章（非公開）と、[print-craft MCP の実装案](https://github.com/rex0220/print-craft-authoring-mcp/blob/main/docs/プラグイン化の実装案.md)（同じ契約。4 章 作業フォルダーの結び付け、5 章 ツールと入出力、7 章 互換表、15 章 接続のファイル）。
 
 最新の版は [リリース](https://github.com/rex0220/formula-authoring-mcp/releases/latest)。
 
@@ -26,7 +26,11 @@ kintone の計算式プラグイン（rex0220 formula。Ver.101 以降）の設�
 | `fml_calc` | 取ったレコードに設定を当てた模擬の計算（項目ごとの前後の値。1 回 10 件まで。評価は Worker で時間上限付き。kintone は更新しない） |
 | `fml_try` | 同梱のサンプルアプリ（架空。全項目タイプ × 2、テーブル 2 つ、レコード 3 件）で式を試す（関数の解説・使用例・式の断片を実際の計算式エンジンで確かめる。利用者のアプリ・レコード・kintone は使わない）。`fields` で項目を足す、`data` で架空の値のレコード、`app` で利用者のアプリの項目定義（`fml_fields` で取ったもの）に架空の値 |
 | `fml_fields` / `fml_record` / `fml_users` / `fml_pull` | kintone から項目定義・レコード（形だけ返す）・ユーザー情報のテストデータ（件数だけ返す）・アプリの今の設定を取る（GET だけ） |
-| `fml_files` / `fml_take` / `fml_edit` / `fml_diff` | 作業フォルダーの一覧、`inbox/` のダウンロードをアプリのフォルダーへ、ダウンロードを `-edit.json` に写す、2 つの設定の差 |
+| `fml_files` / `fml_take` / `fml_edit` / `fml_diff` | 作業フォルダーの一覧、`inbox/` のダウンロードをアプリのフォルダーへ、ダウンロードを `-edit.json` に写す（項目検証は `plugin: "field-validation"`）、2 つの設定の差 |
+| `fv_save_settings` / `fv_update_rows` | 項目検証の新しい設定を検査して保存（上書きしない）/ 既存の設定の行（`fieldcode`）を差し替え・追加し、共通の設定をキーごとに置き換える（`fv_summary` の digest を照合） |
+| `fv_summary` / `fv_normalize` / `fv_diff` | 項目検証の設定の要約と digest（`field` で 1 行の式の全文）/ 検査だけ（`check` で入力と出力の差）/ 2 つの設定の差 |
+| `fv_check` | 取ったレコードに項目検証の設定を当てた判定の模擬（イベントごとの非表示・入力不可・必須・誤りの文・保存の前に入れる値。1 回 10 件・6 イベントまで。kintone は更新しない） |
+| `fv_pull` | アプリの今の項目検証の設定を取る（GET だけ。ダウンロードと同じ名前） |
 | `kintone_get_app` / `kintone_list_records` | Desktop だけ（Claude Code では公式の kintone MCP）。アプリの情報とレコードの形を数件 |
 
 入出力の約束は print-craft MCP と同じ（`additionalProperties: false`、応答は `ok / invalid / incompatible / conflict / denied / failed` と `findings`）。詳しくは [docs/tools-table.md](docs/tools-table.md)。

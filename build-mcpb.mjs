@@ -40,6 +40,13 @@ export const MANIFEST_TOOLS = [
   ["fml_take", "inbox のダウンロードをアプリのフォルダーへ"],
   ["fml_edit", "ダウンロードを -edit.json に写す"],
   ["fml_diff", "2 つの設定の差"],
+  ["fv_save_settings", "項目検証の新しい設定を検査して保存（上書きしない）"],
+  ["fv_update_rows", "項目検証の既存の設定の行を差し替え・追加"],
+  ["fv_summary", "項目検証の設定の要約と digest"],
+  ["fv_normalize", "項目検証の設定の検査（書き換えない）"],
+  ["fv_check", "レコードに項目検証の設定を当てた判定の模擬（更新しない）"],
+  ["fv_pull", "アプリの今の項目検証プラグインの設定を取る"],
+  ["fv_diff", "2 つの項目検証の設定の差"],
   ["kintone_get_app", "kintone のアプリの情報"],
   ["kintone_list_records", "kintone のレコードの形を数件"]
 ];
@@ -49,7 +56,7 @@ export const manifest = {
   name: "formula-authoring",
   display_name: "計算式 設定オーサリング（Formula）",
   version: pkg.version,
-  description: "kintone の計算式プラグイン（rex0220 formula）の設定 JSON を、検査（normalize）と模擬の計算（calc）を通して作業フォルダーに保存・確認する。kintone には読み取り（GET）だけ",
+  description: "kintone の計算式プラグイン（rex0220 formula）と項目検証プラグイン（rex0220 field validation）の設定 JSON を、検査と模擬の計算・判定を通して作業フォルダーに保存・確認する。kintone には読み取り（GET）だけ",
   author: { name: "rex0220" },
   license: "MIT",
   homepage: REPO_URL,

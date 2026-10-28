@@ -95,7 +95,7 @@ export function fromSaveResult(r: SaveResult, extra: Record<string, unknown> = {
   const findings = r.findings as unknown as Finding[];
   if (r.status === "ok") {
     return ok(
-      { path: r.path, ...(r.summary ? { summary: r.summary } : {}), ...(r.diff ? { diff: r.diff } : {}), ...extra, ...(r.cleanup ? { cleanup: r.cleanup, note: r.message } : {}) },
+      { path: r.path, ...(r.summary ? { summary: r.summary } : {}), ...(r.diff ? { diff: r.diff } : {}), ...(r.fvDiff ? { diff: r.fvDiff } : {}), ...extra, ...(r.cleanup ? { cleanup: r.cleanup, note: r.message } : {}) },
       { findings, digest: r.digest }
     );
   }

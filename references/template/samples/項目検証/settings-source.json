@@ -1,0 +1,174 @@
+{
+  "date": "2026-10-28 09:00:00",
+  "pluginName": "項目検証プラグイン",
+  "pluginID": "rex0220 field validation plugin",
+  "PluginVersion": "72",
+  "appId": 900,
+  "appName": "経費申請（架空）",
+  "pluginEnable": true,
+  "pluginPreHide": false,
+  "pluginProductEnv": false,
+  "pluginComment": "",
+  "pluginDescription": "",
+  "pluginBorderInfo": {},
+  "pluginInfos": [
+    {
+      "fieldcode": "申請日",
+      "state": true,
+      "formulaSet": "1",
+      "disabledSet": "",
+      "hideSet": "",
+      "init": false,
+      "condInfos": [
+        {
+          "state": true,
+          "condSet": "AND(申請日, DATE_DIFF(\"TODAY\", 申請日, \"days\") > 0)",
+          "jaSet": "\"未来の日付は申請できません\"",
+          "enSet": "",
+          "zhSet": ""
+        }
+      ]
+    },
+    {
+      "fieldcode": "金額",
+      "state": true,
+      "formulaSet": "",
+      "disabledSet": "",
+      "hideSet": "",
+      "init": false,
+      "condInfos": [
+        {
+          "state": true,
+          "condSet": "金額 > 100000",
+          "jaSet": "\"10 万円を超えています（\" & 金額 & \" 円）\"",
+          "enSet": "\"Over 100,000 yen\"",
+          "zhSet": ""
+        }
+      ]
+    },
+    {
+      "fieldcode": "承認者",
+      "state": true,
+      "formulaSet": "金額 >= 50000",
+      "disabledSet": "",
+      "hideSet": "",
+      "init": false,
+      "condInfos": []
+    },
+    {
+      "fieldcode": "理由",
+      "state": true,
+      "formulaSet": "区分 = \"接待費\"",
+      "disabledSet": "",
+      "hideSet": "",
+      "init": false,
+      "condInfos": []
+    },
+    {
+      "fieldcode": "支払方法",
+      "state": false,
+      "formulaSet": "1",
+      "disabledSet": "",
+      "hideSet": "",
+      "init": false,
+      "condInfos": []
+    },
+    {
+      "fieldcode": "取引先",
+      "state": true,
+      "formulaSet": "",
+      "disabledSet": "",
+      "hideSet": "区分 = \"交通費\"",
+      "init": true,
+      "condInfos": []
+    },
+    {
+      "fieldcode": "備考",
+      "state": true,
+      "formulaSet": "",
+      "disabledSet": "",
+      "hideSet": "区分 = \"交通費\"",
+      "init": true,
+      "condInfos": []
+    },
+    {
+      "fieldcode": "明細",
+      "state": true,
+      "formulaSet": "",
+      "disabledSet": "",
+      "hideSet": "",
+      "init": false,
+      "condInfos": [],
+      "tblfields": [
+        {
+          "fieldcode": "日付T",
+          "state": true,
+          "hideSet": "区分 <> \"交通費\""
+        },
+        {
+          "fieldcode": "内容T",
+          "state": false,
+          "hideSet": ""
+        },
+        {
+          "fieldcode": "金額T",
+          "state": false,
+          "hideSet": ""
+        }
+      ]
+    },
+    {
+      "fieldcode": "日付T",
+      "state": true,
+      "formulaSet": "",
+      "disabledSet": "",
+      "hideSet": "",
+      "init": false,
+      "condInfos": []
+    },
+    {
+      "fieldcode": "内容T",
+      "state": true,
+      "formulaSet": "金額T <> \"\"",
+      "disabledSet": "",
+      "hideSet": "",
+      "init": false,
+      "condInfos": []
+    },
+    {
+      "fieldcode": "金額T",
+      "state": true,
+      "formulaSet": "",
+      "disabledSet": "",
+      "hideSet": "",
+      "init": false,
+      "condInfos": [
+        {
+          "state": true,
+          "condSet": "金額T > 10000",
+          "jaSet": "\"1 行 10,000 円まで\"",
+          "enSet": "",
+          "zhSet": ""
+        }
+      ]
+    },
+    {
+      "fieldcode": "明細($ADD)",
+      "state": true,
+      "formulaSet": "",
+      "disabledSet": "",
+      "hideSet": "ステータス = \"完了\"",
+      "init": false,
+      "condInfos": []
+    },
+    {
+      "fieldcode": "口座",
+      "state": true,
+      "formulaSet": "",
+      "disabledSet": "支払方法 = \"現金\"",
+      "hideSet": "",
+      "init": false,
+      "condInfos": []
+    }
+  ]
+}

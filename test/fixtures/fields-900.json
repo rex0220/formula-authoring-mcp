@@ -1,0 +1,212 @@
+{
+  "tool": "formula-authoring fields",
+  "fetchedAt": "2026-10-28T00:00:00.000Z",
+  "baseUrl": "https://example.cybozu.com",
+  "appId": 900,
+  "appName": "架空の申請",
+  "preview": false,
+  "lang": "ja",
+  "revision": "1",
+  "properties": {
+    "氏名": {
+      "type": "SINGLE_LINE_TEXT",
+      "code": "氏名",
+      "label": "氏名",
+      "required": true,
+      "minLength": "2",
+      "maxLength": "10",
+      "defaultValue": ""
+    },
+    "金額": {
+      "type": "NUMBER",
+      "code": "金額",
+      "label": "金額",
+      "required": false,
+      "minValue": "0",
+      "maxValue": "1000",
+      "defaultValue": ""
+    },
+    "区分": {
+      "type": "DROP_DOWN",
+      "code": "区分",
+      "label": "区分",
+      "required": false,
+      "options": {
+        "A": {
+          "label": "A",
+          "index": "0"
+        },
+        "B": {
+          "label": "B",
+          "index": "1"
+        }
+      },
+      "defaultValue": ""
+    },
+    "備考": {
+      "type": "MULTI_LINE_TEXT",
+      "code": "備考",
+      "label": "備考",
+      "required": false,
+      "defaultValue": "既定の備考"
+    },
+    "時刻": {
+      "type": "TIME",
+      "code": "時刻",
+      "label": "時刻",
+      "required": false,
+      "defaultValue": "09:00"
+    },
+    "参照": {
+      "type": "SINGLE_LINE_TEXT",
+      "code": "参照",
+      "label": "参照",
+      "required": false,
+      "defaultValue": "",
+      "lookup": {
+        "relatedApp": {
+          "app": "10",
+          "code": ""
+        },
+        "relatedKeyField": "キー",
+        "fieldMappings": [],
+        "lookupPickerFields": [],
+        "filterCond": "",
+        "sort": ""
+      }
+    },
+    "計算": {
+      "type": "CALC",
+      "code": "計算",
+      "label": "計算",
+      "expression": "金額 * 2"
+    },
+    "担当": {
+      "type": "USER_SELECT",
+      "code": "担当",
+      "label": "担当",
+      "required": false,
+      "defaultValue": []
+    },
+    "グループ1": {
+      "type": "GROUP",
+      "code": "グループ1",
+      "label": "グループ1",
+      "openGroup": true
+    },
+    "明細": {
+      "type": "SUBTABLE",
+      "code": "明細",
+      "label": "明細",
+      "fields": {
+        "品名": {
+          "type": "SINGLE_LINE_TEXT",
+          "code": "品名",
+          "label": "品名",
+          "required": false,
+          "defaultValue": ""
+        },
+        "数量": {
+          "type": "NUMBER",
+          "code": "数量",
+          "label": "数量",
+          "required": false,
+          "minValue": "",
+          "maxValue": "100",
+          "defaultValue": ""
+        }
+      }
+    }
+  },
+  "layout": [
+    {
+      "type": "ROW",
+      "fields": [
+        {
+          "type": "SINGLE_LINE_TEXT",
+          "code": "氏名"
+        },
+        {
+          "type": "NUMBER",
+          "code": "金額"
+        },
+        {
+          "type": "LABEL",
+          "label": "注意書き",
+          "elementId": "note"
+        }
+      ]
+    },
+    {
+      "type": "ROW",
+      "fields": [
+        {
+          "type": "DROP_DOWN",
+          "code": "区分"
+        },
+        {
+          "type": "MULTI_LINE_TEXT",
+          "code": "備考"
+        },
+        {
+          "type": "SPACER",
+          "elementId": "sp1"
+        },
+        {
+          "type": "SPACER"
+        }
+      ]
+    },
+    {
+      "type": "ROW",
+      "fields": [
+        {
+          "type": "TIME",
+          "code": "時刻"
+        },
+        {
+          "type": "SINGLE_LINE_TEXT",
+          "code": "参照"
+        },
+        {
+          "type": "CALC",
+          "code": "計算"
+        }
+      ]
+    },
+    {
+      "type": "SUBTABLE",
+      "code": "明細",
+      "fields": [
+        {
+          "type": "SINGLE_LINE_TEXT",
+          "code": "品名"
+        },
+        {
+          "type": "NUMBER",
+          "code": "数量"
+        }
+      ]
+    },
+    {
+      "type": "GROUP",
+      "code": "グループ1",
+      "layout": [
+        {
+          "type": "ROW",
+          "fields": [
+            {
+              "type": "USER_SELECT",
+              "code": "担当"
+            },
+            {
+              "type": "HR",
+              "elementId": "line1"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "views": {}
+}

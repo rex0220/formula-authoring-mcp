@@ -20,6 +20,9 @@ const REWRITE = process.env.FORMULA_TEST_REWRITE_CONN;
 /** 計算式プラグインが保存した形のプラグインの設定（試験が中核の authoring API で作ってファイルに置く） */
 const PLUGIN_CONFIG = process.env.FORMULA_TEST_PLUGIN_CONFIG;
 const FORMULA_PLUGIN_ID = "dhgihghfgfmibkdldkeibboabfnmdpke";
+/** 項目検証プラグインの設定（MCP 0.4.0 の fv_pull の試験。無ければ 404） */
+const FV_PLUGIN_CONFIG = process.env.FORMULA_TEST_FV_PLUGIN_CONFIG;
+const FV_PLUGIN_ID = "iciolillbpdfcppoeibhnpfbhmbghkbo";
 const HOSTS = new Set(["x.cybozu.com", "dev-x.cybozu.com"]);
 const APPS = new Set(["2305", "101"]);
 
@@ -81,6 +84,7 @@ globalThis.fetch = async (input, init = {}) => {
   if ((api === "app/views" || api === "preview/app/views") && appOf("app")) return json(200, { views: { 一覧A: { id: "5555", name: "一覧A", index: "0", type: "LIST" } }, revision: "5" });
   if (api === "record" && appOf("app") && q.get("id") === "7") return json(200, { record: RECORD });
   if ((api === "app/plugin/config" || api === "preview/app/plugin/config") && appOf("app")) {
+    if (q.get("id") === FV_PLUGIN_ID && FV_PLUGIN_CONFIG) return json(200, { config: JSON.parse(readFileSync(FV_PLUGIN_CONFIG, "utf8")), revision: "13" });
     if (q.get("id") !== FORMULA_PLUGIN_ID || !PLUGIN_CONFIG) return json(404, { code: "GAIA_PL18", id: "x", message: "SERVER-SECRET-MESSAGE プラグインが追加されていません" });
     return json(200, { config: JSON.parse(readFileSync(PLUGIN_CONFIG, "utf8")), revision: "12" });
   }

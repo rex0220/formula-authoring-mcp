@@ -16,8 +16,8 @@ export interface EvalTarget {
 }
 
 /** 設定ファイル・項目定義・接続先・ユーザー情報をそろえる（読む前に kintone/** の確かめ。アプリのフォルダーの設定は同じフォルダーの fields.json） */
-export async function evalTargetOf(w: WorkContextForTool, settingsPath: string, opt: { fields?: string; profile?: string; users?: string }): Promise<EvalTarget> {
-  const file = readSettingsFile(w.root, settingsPath, w.mode);
+export async function evalTargetOf(w: WorkContextForTool, settingsPath: string, opt: { fields?: string; profile?: string; users?: string }, plugin: "formula" | "field-validation" = "formula"): Promise<EvalTarget> {
+  const file = readSettingsFile(w.root, settingsPath, w.mode, plugin);
   const fieldsFile = fieldsFileFor(w.root, file.file, opt.fields, w.mode, file.settings);
   const fields = await withJsonError(w.root, fieldsFile, "項目定義のファイル", () => readFieldsFile(fieldsFile));
   const baseUrl = trustedBaseUrl(w.mode, w.root, path.resolve(w.root, settingsPath), opt.profile);

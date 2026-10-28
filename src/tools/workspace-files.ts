@@ -4,7 +4,7 @@
  *     無ければ profile ごとのアプリのフォルダーの名前と印の状態、使われていない profile のフォルダーの名前、settings/ temp/ fields/ records/ users/ の JSON の名前、inbox/ の件数
  *     （Desktop の AI はファイルの一覧を見る手段が無い）。名前だけ（中身は返さない。印の合わないフォルダーの中は一覧しない。15.5）
  *   - fml_take: inbox/ のダウンロードを、名前のまま profile のアプリのフォルダーへ移す（上書きしない）
- *   - fml_edit: アプリのフォルダーのダウンロード / pull を -edit.json に写す（ダウンロードは書き換えない。既にあればそのまま）
+ *   - fml_edit: アプリのフォルダーのダウンロード / pull を -edit.json に写す（ダウンロードは書き換えない。既にあればそのまま。plugin: field-validation で項目検証のもの。MCP 0.4.0）
  *   - fml_diff: 2 つの設定の差（項目単位。★ = 既存レコードの値に影響する項目。権限のコードは件数）
  * アプリのフォルダー（kintone/**）を使うのは、kintone の接続のファイルがあるときだけ（profile の形。15.4）
  */
@@ -16,7 +16,6 @@ import {
   FileExistsError,
   INBOX,
   InputError,
-  SNAPSHOT_RE,
   WRITE_ROOTS,
   appFolderOfFile,
   appFoldersOf,
@@ -28,6 +27,7 @@ import {
   requireProfiles,
   resolveRead,
   resolveWrite,
+  snapshotKindOf,
   takeInbox,
   unusedProfileDirs,
   writeNewFile,
@@ -101,7 +101,7 @@ export function registerWorkspaceFiles(server: McpServer, ctx: ServerContext): v
     {
       title: "計算式プラグインの作業フォルダーのファイルの一覧",
       description:
-        "計算式プラグイン（rex0220 formula）の作業フォルダーのファイルの名前の一覧（中身は返さない）。app を付けると、kintone の接続のファイルの profile のそのアプリのフォルダー（ダウンロード / pull は新しい順で先頭が今の設定、-edit.json、AI が作った設定、records）。" +
+        "計算式プラグイン（rex0220 formula）と項目検証プラグイン（rex0220 field validation）の作業フォルダーのファイルの名前の一覧（中身は返さない）。app を付けると、kintone の接続のファイルの profile のそのアプリのフォルダー（ダウンロード / pull は新しい順で先頭が今の設定（計算式は snapshots、項目検証は fvSnapshots）、-edit.json、AI が作った設定、records）。" +
         "省くと、profile ごとのアプリのフォルダーの名前と状態、settings/ temp/ fields/ records/ users/ requirements/ の JSON、inbox/ の件数。読み取りだけ",
       inputSchema: z.object({ workspaceId: workspaceIdSchema(ctx.surface), app: appSchema.optional(), profile: profileSchema }).strict(),
       annotations: { readOnlyHint: true, openWorldHint: false }
@@ -129,8 +129,11 @@ export function registerWorkspaceFiles(server: McpServer, ctx: ServerContext): v
             current: l.snapshots[0] ?? null,
             edits: l.edits,
             others: l.others,
+            fvSnapshots: l.fvSnapshots,
+            fvCurrent: l.fvSnapshots[0] ?? null,
+            fvEdits: l.fvEdits,
             records: l.records,
-            note: "snapshots（ダウンロード / pull）は書き換えない（fml_edit で -edit.json に写す）。others は AI が作った設定"
+            note: "snapshots（計算式）と fvSnapshots（項目検証）のダウンロード / pull は書き換えない（fml_edit で -edit.json に写す。項目検証は plugin: field-validation）。others は AI が作った設定"
           });
         }
         const local = localFiles(root);
@@ -155,7 +158,7 @@ export function registerWorkspaceFiles(server: McpServer, ctx: ServerContext): v
     {
       title: "inbox のダウンロードをアプリのフォルダーへ",
       description:
-        "利用者が作業フォルダーの inbox/ に置いた計算式プラグイン（rex0220 formula）の設定のダウンロード（rex0220-formula-app<番号>-<日時>.json）を、封筒の appId で kintone の接続のファイルの profile のアプリのフォルダーへ名前のまま移す（上書きしない。フォルダーが無ければ作る）。" +
+        "利用者が作業フォルダーの inbox/ に置いた計算式プラグイン（rex0220 formula）・項目検証プラグイン（rex0220 field validation）の設定のダウンロード（rex0220-formula-app<番号>-<日時>.json、rex0220-field-validation-app<番号>-<日時>.json）を、封筒の appId で kintone の接続のファイルの profile のアプリのフォルダーへ名前のまま移す（上書きしない。フォルダーが無ければ作る）。" +
         "移せなかったファイルは理由を返す。結果を推し量らず、このツールで確かめる",
       inputSchema: z.object({ workspaceId: workspaceIdSchema(ctx.surface), profile: profileSchema }).strict(),
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false }
@@ -185,13 +188,14 @@ export function registerWorkspaceFiles(server: McpServer, ctx: ServerContext): v
     {
       title: "ダウンロードを -edit.json に写す",
       description:
-        "計算式プラグイン（rex0220 formula）のアプリのフォルダーのダウンロード / pull のファイルを、直すための -edit.json に写す（ダウンロードのファイルは書き換えない。-edit.json が既にあればそのまま）。" +
-        "path を省くと app の一番新しいダウンロード / pull（今の設定）。kintone の接続のファイルがあるときだけ。結果を推し量らず、このツールで確かめる",
+        "計算式プラグイン（rex0220 formula）か項目検証プラグイン（rex0220 field validation）のアプリのフォルダーのダウンロード / pull のファイルを、直すための -edit.json に写す（ダウンロードのファイルは書き換えない。-edit.json が既にあればそのまま）。" +
+        "path を省くと app の一番新しいダウンロード / pull（今の設定。plugin で計算式か項目検証かを選ぶ。既定は計算式）。kintone の接続のファイルがあるときだけ。結果を推し量らず、このツールで確かめる",
       inputSchema: z
         .object({
           workspaceId: workspaceIdSchema(ctx.surface),
           path: z.string().min(1).max(512).optional().describe("ダウンロード / pull のファイル（作業フォルダーからの相対パス）"),
           app: appSchema.optional(),
+          plugin: z.enum(["formula", "field-validation"]).optional().describe("どのプラグインの設定か（formula = 計算式（既定）、field-validation = 項目検証）。path を渡したときはファイルの名前で決まる"),
           profile: profileSchema
         })
         .strict(),
@@ -212,15 +216,19 @@ export function registerWorkspaceFiles(server: McpServer, ctx: ServerContext): v
           const dir = appDirIn(root, def, input.app);
           if (!dir) throw new InputError(`アプリ ${input.app} のフォルダー（kintone/${def.profile}/${input.app}-…）が無い。先に fml_fields（か fml_pull）`);
           const l = listAppFolder(dir, root);
-          if (!l.snapshots.length) throw new InputError(`${rel(root, dir)} にダウンロード / pull のファイルが無い（設定画面でダウンロードして inbox/ に置き fml_take、または fml_pull）`);
-          src = rel(root, path.join(dir, l.snapshots[0]));
+          const fv = input.plugin === "field-validation";
+          const snapshots = fv ? l.fvSnapshots : l.snapshots;
+          if (!snapshots.length) throw new InputError(`${rel(root, dir)} に${fv ? "項目検証の" : ""}ダウンロード / pull のファイルが無い（設定画面でダウンロードして inbox/ に置き fml_take、または ${fv ? "fv_pull" : "fml_pull"}）`);
+          src = rel(root, path.join(dir, snapshots[0]));
         }
         const folder = appFolderOfFile(root, path.resolve(root, src));
-        if (!SNAPSHOT_RE.test(path.basename(src)) || !folder) throw new InputError(`写すのはアプリのフォルダーのダウンロード / pull のファイル（rex0220-formula-app<番号>-<日時>.json）: ${src}`);
+        const kind = snapshotKindOf(path.basename(src));
+        if (!kind || !folder) throw new InputError(`写すのはアプリのフォルダーのダウンロード / pull のファイル（rex0220-formula-app<番号>-<日時>.json、項目検証は rex0220-field-validation-app<番号>-<日時>.json）: ${src}`);
+        if (input.plugin !== undefined && input.plugin !== kind) throw new InputError(`plugin「${input.plugin}」とファイルの種類（${kind}）が違う`);
         if (input.profile !== undefined && input.profile !== folder.profile) throw new InputError(`profile「${input.profile}」とファイルのフォルダーの profile（${folder.profile}）が違う`);
-        const f = readSettingsFile(root, src, mode);
+        const f = readSettingsFile(root, src, mode, kind);
         const dest = resolveWrite(rel(root, editNameOf(f.file)), WRITE_ROOTS.kintone, root);
-        const next = "直す: fml_summary（digest）→ fml_update_fields → fml_calc。差は fml_diff";
+        const next = kind === "field-validation" ? "直す: fv_summary（digest）→ fv_update_rows → fv_check。差は fv_diff" : "直す: fml_summary（digest）→ fml_update_fields → fml_calc。差は fml_diff";
         if (existsSync(dest)) return ok({ path: rel(root, dest), from: f.relPath, existed: true, next: `既にある -edit.json を続けて直す（${next}）` });
         assertChangeAllowed(root, dest, "settings", mode);
         try {

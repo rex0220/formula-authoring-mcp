@@ -1,0 +1,67 @@
+{
+  "tool": "formula-authoring record",
+  "fetchedAt": "2026-10-28T00:00:00.000Z",
+  "baseUrl": "https://example.cybozu.com",
+  "appId": 900,
+  "id": 1,
+  "record": {
+    "$id": {
+      "type": "__ID__",
+      "value": "1"
+    },
+    "$revision": {
+      "type": "__REVISION__",
+      "value": "1"
+    },
+    "氏名": {
+      "type": "SINGLE_LINE_TEXT",
+      "value": "test"
+    },
+    "金額": {
+      "type": "NUMBER",
+      "value": ""
+    },
+    "区分": {
+      "type": "DROP_DOWN",
+      "value": "A"
+    },
+    "備考": {
+      "type": "MULTI_LINE_TEXT",
+      "value": "メモ"
+    },
+    "時刻": {
+      "type": "TIME",
+      "value": ""
+    },
+    "参照": {
+      "type": "SINGLE_LINE_TEXT",
+      "value": ""
+    },
+    "計算": {
+      "type": "CALC",
+      "value": ""
+    },
+    "担当": {
+      "type": "USER_SELECT",
+      "value": []
+    },
+    "明細": {
+      "type": "SUBTABLE",
+      "value": [
+        {
+          "id": "1",
+          "value": {
+            "品名": {
+              "type": "SINGLE_LINE_TEXT",
+              "value": "ペン"
+            },
+            "数量": {
+              "type": "NUMBER",
+              "value": "2"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

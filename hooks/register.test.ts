@@ -67,6 +67,7 @@ describe('4.2 直接の Write / Edit', () => {
     const r = await $.tool.call({ tool: 'Write', file_path: '/ws/settings/new.json', content: '{}' } as any)
     expect(isDenied(r)).toBe(true)
     expect(denyText(r)).toMatch(/fml_save_settings/)
+    expect(denyText(r)).toMatch(/fv_save_settings/)
     expect(reached.length).toBe(0)
   })
 
@@ -122,6 +123,14 @@ describe('4.1 workspaceId の書き換え', () => {
     const r = await $.tool.call({ tool: MCP('fml_save_settings'), workspaceId: '/evil', path: 'settings/x.json', content: '{}', expectedAbsent: true } as any)
     expect(isDenied(r)).toBe(false)
     expect(reached[0]?.workspaceId).toBe('/ws')
+  })
+
+  test('項目検証の fv_* も 7 つとも書き換える（0.4.0）', async ($, on) => {
+    const reached = engine(on, { session: '/ws/sub', roots: ['/ws'] })
+    const tools = ['fv_save_settings', 'fv_update_rows', 'fv_summary', 'fv_normalize', 'fv_check', 'fv_pull', 'fv_diff']
+    for (const tool of tools) await $.tool.call({ tool: MCP(tool), workspaceId: '/evil' } as any)
+    expect(reached.length).toBe(tools.length)
+    expect(reached.every(r => r.workspaceId === '/ws')).toBe(true)
   })
 
   test('作業フォルダーの診断（③）も書き換える', async ($, on) => {

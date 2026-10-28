@@ -2,6 +2,16 @@
 
 formula MCP（Claude Desktop の拡張機能「計算式 設定オーサリング（Formula）」と、Claude Code のプラグイン `formula`）の、利用者に見える変更です。新しい版が上です。
 
+## 0.4.0（未リリース）
+
+中核は 0.6.0。資料はテンプレート formula-authoring a79b643。
+
+- 項目検証プラグイン（rex0220 field validation）Ver.72 以降の設定のツール `fv_save_settings` / `fv_update_rows` / `fv_summary` / `fv_normalize` / `fv_check` / `fv_pull` / `fv_diff`。項目検証の式は計算式と同じ言語で、計算式プラグインの zip（Ver.102 以降。試用版でよい）のエンジンで評価する（項目検証の zip は要らない）。更新系の関数（FSET、BUTTON、TLTABLE など 11）は、項目検証の式のどこにあっても評価の前に止める。`fv_check` はレコードに当てた判定の模擬（誤りの文と入れる値は 200 文字まで）
+- 資料の章 `fv`（項目検証の手順・結果の読み方・式の決まり）、`fv-spec`（設定ファイル仕様）、`fv-patterns`（検証パターン P1〜P14）、`fv-sample-settings`（雛形）
+- `fml_files`（app）に項目検証のダウンロード / pull（`fvSnapshots`、`fvCurrent`、`fvEdits`）。`fml_edit` に `plugin`（`"field-validation"` で項目検証のダウンロードを `-edit.json` に写す）。`fml_take` は項目検証のダウンロード（`rex0220-field-validation-app<番号>-<日時>.json`）も移す
+- Claude Code のプラグインのフック: `fv_*` も作業フォルダーを登録したものに書き換える。`settings/`・`kintone/` の直接の書き込みを断るときに `fv_save_settings` / `fv_update_rows` も案内する
+- 資料（テンプレートの更新）: 計算式プラグイン Ver.102 の zip に合わせた機械生成の資料（関数一覧・設定ファイル仕様・計算パターンの検証の版の表記）
+
 ## 0.3.7（2026-10-20）
 
 中核は 0.4.1 のまま。資料はテンプレート formula-authoring 3a68d9b。

@@ -24,7 +24,10 @@ export const FILES = [
   "docs/設定ファイル仕様.md",
   "docs/関数一覧.md",
   "docs/既定のテストデータ.md",
-  "samples/settings-source.json"
+  "samples/settings-source.json",
+  "docs/項目検証/設定ファイル仕様.md",
+  "docs/項目検証/検証パターン.md",
+  "samples/項目検証/settings-source.json"
 ];
 
 const git = (...a) => execFileSync("git", ["-C", template, ...a], { encoding: "utf8" }).trim();

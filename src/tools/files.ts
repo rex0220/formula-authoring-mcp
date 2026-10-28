@@ -18,6 +18,7 @@ import {
   EvalError,
   EvalTimeoutError,
   FORMULA_CONFIG_PLUGIN_ID,
+  FV_CONFIG_PLUGIN_ID,
   FileExistsError,
   InputError,
   KINTONE_ROOT,
@@ -135,8 +136,11 @@ export async function withJsonError<T>(root: string, file: string, what: string,
   }
 }
 
-/** 設定ファイルを 1 回だけ読み、同じ中身から JSON と digest を作る（読み直すと、その間に変わったときにずれる）。kintone/** の中なら先に確かめる */
-export function readSettingsFile(root: string, p: string, mode: ModeSource): SettingsFile {
+/**
+ * 設定ファイルを 1 回だけ読み、同じ中身から JSON と digest を作る（読み直すと、その間に変わったときにずれる）。kintone/** の中なら先に確かめる。
+ * plugin は封筒の pluginID の照合（既定は計算式。項目検証の fv_* は "field-validation"。MCP 0.4.0）
+ */
+export function readSettingsFile(root: string, p: string, mode: ModeSource, plugin: "formula" | "field-validation" = "formula"): SettingsFile {
   const file = resolveRead(p, root);
   if (!existsSync(file)) throw new InputError(`ファイルが無い: ${rel(root, file)}`);
   assertReadable(root, file, mode);
@@ -150,7 +154,9 @@ export function readSettingsFile(root: string, p: string, mode: ModeSource): Set
     throw new InputError(`${rel(root, file)} を JSON として読めない${jsonErrorWhere(e)}（中身は返さない）`);
   }
   if (!settings || typeof settings !== "object" || Array.isArray(settings)) throw new InputError(`${rel(root, file)} の最上位はオブジェクト`);
-  if ((settings as Record<string, unknown>).pluginID !== FORMULA_CONFIG_PLUGIN_ID) throw new InputError(`${rel(root, file)} は計算式プラグインの設定のファイルではない（封筒の pluginID が "${FORMULA_CONFIG_PLUGIN_ID}" でない）`);
+  const pluginID = (settings as Record<string, unknown>).pluginID;
+  if (plugin === "formula" && pluginID !== FORMULA_CONFIG_PLUGIN_ID) throw new InputError(`${rel(root, file)} は計算式プラグインの設定のファイルではない（封筒の pluginID が "${FORMULA_CONFIG_PLUGIN_ID}" でない${pluginID === FV_CONFIG_PLUGIN_ID ? "。項目検証の設定は fv_* のツール" : ""}）`);
+  if (plugin === "field-validation" && pluginID !== FV_CONFIG_PLUGIN_ID) throw new InputError(`${rel(root, file)} は項目検証プラグインの設定のファイルではない（封筒の pluginID が "${FV_CONFIG_PLUGIN_ID}" でない${pluginID === FORMULA_CONFIG_PLUGIN_ID ? "。計算式の設定は fml_* のツール" : ""}）`);
   return { file, relPath: rel(root, file), bytes, text, settings: settings as Record<string, unknown>, digest: digestOf(bytes) };
 }
 

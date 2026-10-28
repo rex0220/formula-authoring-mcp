@@ -6,6 +6,7 @@ export const DOC_SECTIONS = [
   { key: "navi", title: "使い方ナビ（できること = 計算の種類と記事、使い方の流れ、頼み方の例、今の設定の変え方、AI がしないこと）", ref: "docs/使い方ナビ.md" },
   { key: "howto-new", title: "新しい設定を作る（手順。仕様の確認 → 式 → 保存 → calc）", guide: "howto-new.md" },
   { key: "howto-edit", title: "既存の設定を変える（pull / take → edit → 差し替え → calc → diff）", guide: "howto-edit.md" },
+  { key: "fv", title: "項目検証プラグインの設定（必須条件・入力不可・非表示・初期化・検証条件。fv_* のツールの手順、結果の読み方、式の決まり）", guide: "fv.md" },
   { key: "requirements", title: "要件を AI が作る（利用者のやりたいことが短いとき）", guide: "requirements.md" },
   { key: "explain", title: "計算式の解説を頼まれたら", guide: "explain.md" },
   { key: "try", title: "式の試し計算（同梱のサンプルアプリ。関数の解説・使用例・式の断片を fml_try で確かめる）", guide: "try.md" },
@@ -20,5 +21,8 @@ export const DOC_SECTIONS = [
   { key: "spec", title: "設定ファイル仕様（封筒、共通の設定、項目の行、上限）", ref: "docs/設定ファイル仕様.md" },
   { key: "function-list", title: "関数一覧（大きい。query に関数名）", ref: "docs/関数一覧.md" },
   { key: "test-users", title: "既定のテストデータ（架空のユーザー・組織・グループ）", ref: "docs/既定のテストデータ.md" },
-  { key: "sample-settings", title: "雛形: 封筒形式の設定（新しい設定はこれを写す。各種設定 pluginMiscInfo は写さない）", ref: "samples/settings-source.json" }
+  { key: "sample-settings", title: "雛形: 封筒形式の設定（新しい設定はこれを写す。各種設定 pluginMiscInfo は写さない）", ref: "samples/settings-source.json" },
+  { key: "fv-spec", title: "項目検証: 設定ファイル仕様（封筒、共通の設定、行、列ごとに置けない型、更新系の関数）", ref: "docs/項目検証/設定ファイル仕様.md" },
+  { key: "fv-patterns", title: "項目検証: 検証パターン（やりたいこと → 設定の例 → 判定。P1〜P14）", ref: "docs/項目検証/検証パターン.md" },
+  { key: "fv-sample-settings", title: "項目検証: 雛形（封筒形式の設定。新しい設定はこれを写す）", ref: "samples/項目検証/settings-source.json" }
 ];

@@ -1,5 +1,5 @@
 // formula MCP のための Claude Code のフック（formula MCP の hooks/register.ts の写し。実装案 4 章、4.1、4.2。計画 24.6）。
-//   - 作業フォルダーを使うツール（① fml_save_settings など、③ fml_workspace_status）の workspaceId を、
+//   - 作業フォルダーを使うツール（① fml_save_settings など、項目検証の fv_*（MCP 0.4.0）、③ fml_workspace_status）の workspaceId を、
 //     今のセッションのフォルダーに合う登録済みの作業フォルダーの実際のパスに書き換える（AI が渡した値は使わない）
 //   - 作業フォルダーを使わないツール（② fml_docs、fml_status）には何もしない
 //   - 未登録なら利用者に確認して（$.ui.ask）登録する（$.config.set）。登録したら「もう一度実行」と返す
@@ -12,9 +12,9 @@ type $ = EngineInterface
 /**
  * 作業フォルダーを使うツール（① と ③）。このプラグインの MCP サーバー（mcp__plugin_formula_formula__）のものだけ。
  * ほかのサーバーの同じ名前のツール（Desktop の Cowork で拡張機能 .mcpb の formula が一緒に見えるとき。作業フォルダーは拡張機能の設定で決まり、フックは要らない）は捕まえない
- * （0.2.3 までは mcp__.+__ で捕まえ、拡張機能の fml_try まで「設定項目の行が見つからない」で止めていた。0.2.4）
+ * （0.2.3 までは mcp__.+__ で捕まえ、拡張機能の fml_try まで「設定項目の行が見つからない」で止めていた。0.2.4）。項目検証の fv_* は 7 つとも作業フォルダーを使う（0.4.0）
  */
-const WORKSPACE_TOOL = /^mcp__plugin_formula_formula__fml_(save_settings|workspace_status|update_fields|summary|normalize|calc|try|fields|record|users|pull|files|take|edit|diff)$/
+const WORKSPACE_TOOL = /^mcp__plugin_formula_formula__(fml_(save_settings|workspace_status|update_fields|summary|normalize|calc|try|fields|record|users|pull|files|take|edit|diff)|fv_(save_settings|update_rows|summary|normalize|check|pull|diff))$/
 
 /**
  * 登録した後の案内。設定（/config）を変えてもプラグインの MCP サーバーは起動し直さず、/mcp の再接続か
@@ -169,7 +169,7 @@ export const register: Register = (on, options) => {
     if (!isUnder(real, base)) return next(e) // 起点のフォルダーの外は止めない（計算式プラグインと関係のないファイル）
     const rel = real.slice(base.length + 1).replace(/\\/g, '/')
     if (PROTECTED.some(re => re.test(rel)))
-      return { deny: `formula: ${rel} は直接書き換えない。formula MCP の保存のツール（fml_save_settings / fml_update_fields）を使う` }
+      return { deny: `formula: ${rel} は直接書き換えない。formula MCP の保存のツール（fml_save_settings / fml_update_fields、項目検証は fv_save_settings / fv_update_rows）を使う` }
     return next(e)
   }).catch(($, e, next) => (next.called ? next(e) : { deny: 'formula: 書き込む先の確認に失敗した' }))
 

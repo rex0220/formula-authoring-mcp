@@ -27,8 +27,15 @@
 | `fml_pull` | ① | 出す | 出す（運用環境だけ） | — | `{ workspaceId, app, profile?, preview? }` | 要約、`digest` | `kintone/<profile>/<アプリ>/rex0220-formula-app<番号>-<日時>.json`（新しいファイルとしてだけ） | `pull` |
 | `fml_files` | ① | 出す | 出す | ○ | `{ workspaceId, app?, profile? }` | 名前だけ（アプリのフォルダー / profile ごとのフォルダーと印 / `settings/` などの JSON / `inbox/` の件数） | — | `files` |
 | `fml_take` | ① | 出す | 出す | — | `{ workspaceId, profile? }` | 移したファイルと理由 | `inbox/` → `kintone/<profile>/<アプリ>/` | `take` |
-| `fml_edit` | ① | 出す | 出す | — | `{ workspaceId, path? \| app?, profile? }` | 写した `-edit.json` | `kintone/<profile>/<アプリ>/*-edit.json` | `edit` |
+| `fml_edit` | ① | 出す | 出す | — | `{ workspaceId, path? \| app?, plugin?（formula / field-validation）, profile? }` | 写した `-edit.json` | `kintone/<profile>/<アプリ>/*-edit.json` | `edit` |
 | `fml_diff` | ① | 出す | 出す | ○ | `{ workspaceId, before, after }` | 項目ごとの差（★ = 既存レコードの値に影響）、共通の設定の差 | — | `diff` |
+| `fv_save_settings` | ① | 出す | 出す | — | `{ workspaceId, path, content, fields?, expectedAbsent: true, profile?, users? }`（content は項目検証の封筒。pluginID "rex0220 field validation plugin"、PluginVersion 72 以上） | `findings`、`summary`、`digest`、`next` | `fml_save_settings` と同じ（書くのは元の値の封筒） | `fv normalize --out` |
+| `fv_update_rows` | ① | 出す | 出す | — | `{ workspaceId, path, expectedDigest, rows, common?, fields?, profile?, users? }`（rows の行のキーは `FV_ROW_KEYS`。キーごとに丸ごと置き換え、無い行は足す（state を省けば true）。common は `FV_COMMON_KEYS`） | `findings`、`summary`、`diff`（`lines`、`changed`）、`digest` | 同上（`-edit.json` と新しい設定。ダウンロード / pull は不可） | `fv normalize --out`（写しを直す） |
+| `fv_summary` | ① | 出す | 出す | ○ | `{ workspaceId, path, field? }` | 要約、封筒、`fieldcodes`、`rowCount`、`onCount`、`digest`（項目検証の封筒でなければ invalid） | — | `fv summary` |
+| `fv_normalize` | ① | 出す | 出す | ○ | `{ workspaceId, path, fields?, check?, profile?, users?, timeoutSec? }` | `findings`、`summary`、`size`、`checkDiffs` | — | `fv normalize` / `--check` |
+| `fv_check` | ① | 出す | 出す | ○（模擬） | `{ workspaceId, path, records（1〜10）, app?, events?（1〜6。項目検証のイベント名）, lang?（ja / en / zh）, user?, all?, fields?, profile?, users?, timeoutSec? }` | レコード・イベントごとの行（印のある項目。非表示・入力不可・必須・誤りの文・保存の前に入れる値。文と値は中核が 200 文字で切る。1 イベント 300 行、応答全体 64 KiB で打ち切り）、`contextLine`（評価のエンジンの版を含む）、`notice`、`note`。app が設定の appId・フォルダーのアプリと違えば invalid | — | `fv check` |
+| `fv_pull` | ① | 出す | 出す（運用環境だけ） | — | `{ workspaceId, app, profile?, preview? }` | 要約、`digest`、`next` | `kintone/<profile>/<アプリ>/rex0220-field-validation-app<番号>-<日時>.json`（新しいファイルとしてだけ。元の値の封筒） | `fv pull` |
+| `fv_diff` | ① | 出す | 出す | ○ | `{ workspaceId, before, after }` | 共通の設定と行ごとの差、変わった行の項目コード | — | `fv diff` |
 | `kintone_get_app` | ① | **出さない** | 出す | ○ | `{ workspaceId, app（番号か URL）, profile? }` | `appId`、`name`、`code`、`spaceId`、`threadId` | — | （新規） |
 | `kintone_list_records` | ① | **出さない** | 出す | ○ | `{ workspaceId, app, query?, profile? }` | 5 件の形だけ | — | （新規） |
 
