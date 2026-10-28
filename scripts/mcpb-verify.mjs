@@ -95,6 +95,8 @@ async function main() {
     assert(!tools.some((t) => /preview/.test(t.name)), "preview のツールは無い（計算式は fml_calc）");
     const docs = (await call("fml_docs", {})).content.map((c) => c.text).join("\n");
     assert(docs.startsWith(`formula MCP ${manifest.version}（`) && /資料の元: rex0220\/formula-authoring /.test(docs), "fml_docs の目次は版の行と資料の元で始まる");
+    const fvDocs = (await call("fml_docs", { section: "fv" })).content.map((c) => c.text).join("\n");
+    assert(/fv_save_settings/.test(fvDocs) && /fv_check/.test(fvDocs), "fml_docs の fv の章（項目検証の手順）が入っている");
     const st = (await call("fml_status", {})).structuredContent;
     assert(st.result.ready === true && st.result.workspace.name === path.basename(workspace) && existsSync(workspace), `作業フォルダーを作って準備ができた: ${JSON.stringify(st.result.next)}`);
     assert(st.result.pluginZip.readable === true && st.result.pluginZip.compatible === true, "計算式プラグインの zip を読めて互換");

@@ -90,6 +90,9 @@ async function main() {
     const st = (await call("fml_status", {})).structuredContent;
     assert(st.result.ready === true && st.result.surface === "claude-code" && st.result.workspace.registered === 1, `準備ができた: ${JSON.stringify(st.result.next)}`);
     assert(st.result.pluginZip.readable === true && st.result.pluginZip.compatible === true, "計算式プラグインの zip を読めて互換");
+    assert(names.includes("fv_save_settings") && names.includes("fv_check"), "項目検証のツール（fv_*）がある");
+    const fvDocs = (await call("fml_docs", { section: "fv" })).content.map((c) => c.text).join("\n");
+    assert(/fv_save_settings/.test(fvDocs) && /fv_check/.test(fvDocs), "fml_docs の fv の章（項目検証の手順）が入っている");
     const input = { workspaceId: workspace, path: "settings/APP2305-テーブル内集計.json", content: readFileSync(path.join(root, "test", "fixtures", "settings-2305.json"), "utf8"), fields: "fields/2305.json", expectedAbsent: true };
     const saved = (await call("fml_save_settings", input)).structuredContent;
     assert(saved.status === "ok" && existsSync(path.join(workspace, input.path)), `保存できる（zip の中の本体と vendor/ で検査が通る）: ${JSON.stringify(saved)}`);

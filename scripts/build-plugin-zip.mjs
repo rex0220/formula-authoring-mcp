@@ -41,7 +41,7 @@ export const PLUGIN_FILES = [
 
 const readme = `# formula ${pkg.version}（Claude Code のプラグイン）
 
-kintone の計算式プラグイン（rex0220 formula）の設定 JSON を、検査（normalize）と模擬の計算（calc）を通して作業フォルダーに保存・確認する Claude Code のプラグイン（formula MCP と、作業フォルダーの結び付け・設定ファイルへの直接の書き込みを止めるフック）。kintone には読み取り（GET）だけ。
+kintone の計算式プラグイン（rex0220 formula。Ver.101 以降）と項目検証プラグイン（rex0220 field validation。Ver.72 以降。式の評価は計算式プラグインの zip の Ver.102 以降）の設定 JSON を、検査と模擬の計算・判定を通して作業フォルダーに保存・確認する Claude Code のプラグイン（formula MCP と、作業フォルダーの結び付け・設定ファイルへの直接の書き込みを止めるフック）。kintone には読み取り（GET）だけ。
 
 - 入れ方: \`/plugin install ${PLUGIN_NAME} --marketplace rex0220/formula-authoring-mcp\`（Claude Code 2.1.275 以降。それより前は \`/plugin marketplace add rex0220/formula-authoring-mcp\` → \`/plugin install ${PLUGIN_NAME}@${MARKETPLACE_NAME}\`）
 - 設定: \`/config\` で、計算式プラグインの zip と kintone の接続のファイル

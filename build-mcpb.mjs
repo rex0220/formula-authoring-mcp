@@ -93,7 +93,7 @@ export const manifest = {
     pluginZip: {
       type: "file",
       title: "計算式プラグインの zip",
-      description: "アプリに入れた計算式プラグイン（Ver.101 以降）の zip（配布元から入手したもの。同じ版）",
+      description: "アプリに入れた計算式プラグイン（Ver.101 以降。項目検証の設定を扱うなら Ver.102 以降。試用版でよい）の zip（配布元から入手したもの。同じ版）",
       required: true
     },
     kintoneConfig: {
@@ -107,8 +107,8 @@ export const manifest = {
 
 const readme = `# 計算式 設定オーサリング（Formula）${pkg.version}
 
-kintone の計算式プラグイン（rex0220 formula）の設定 JSON を、検査（normalize）と模擬の計算（calc）を通して作業フォルダーに保存・確認する Claude Desktop の拡張機能。
-チャットで「計算式プラグインで〜」と頼む（最初に fml_docs が手順を返す）。kintone には読み取り（GET）だけ。秘密の値は応答・ログに出さない。
+kintone の計算式プラグイン（rex0220 formula。Ver.101 以降）と項目検証プラグイン（rex0220 field validation。Ver.72 以降。式の評価は計算式プラグインの zip の Ver.102 以降）の設定 JSON を、検査と模擬の計算・判定を通して作業フォルダーに保存・確認する Claude Desktop の拡張機能。
+チャットで「計算式プラグインで〜」「項目検証プラグインで〜」と頼む（最初に fml_docs が手順を返す）。kintone には読み取り（GET）だけ。秘密の値は応答・ログに出さない。
 同梱の依存（MCP の SDK、zod、happy-dom など）の著作権表示とライセンスは THIRD_PARTY_NOTICES.md にある。
 プライバシーポリシー、セキュリティ、変更履歴: ${REPO_URL}
 `;

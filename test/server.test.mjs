@@ -65,6 +65,7 @@ test("desktop: ツールに kintone_get_app / kintone_list_records が足され�
     assert.deepEqual(tools.map((t) => t.name), [...TOOLS, "kintone_get_app", "kintone_list_records"]);
     assert.ok(!tools.find((t) => t.name === "fml_save_settings").inputSchema.required.includes("workspaceId"));
     assert.ok(!("preview" in (tools.find((t) => t.name === "fml_pull").inputSchema.properties ?? {})), "Desktop の pull は運用環境だけ");
+    assert.ok(!("preview" in (tools.find((t) => t.name === "fv_pull").inputSchema.properties ?? {})), "Desktop の fv_pull も運用環境だけ");
   } finally {
     await s.close();
     rmSync(root, { recursive: true, force: true });

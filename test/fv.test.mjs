@@ -151,3 +151,48 @@ test("接続のファイル: fv_pull はアプリのフォルダーにダウン�
     rmSync(tmp, { recursive: true, force: true });
   }
 });
+
+test("fv_check の境界: events を省けば一覧編集と同じ既定、detail.show は受けない、レコードのファイルのアプリ違いは invalid、応答 64 KiB で行を打ち切る。fv_summary / fv_diff は zip 無しで動く", { skip }, async () => {
+  const root = makeFvWorkspace();
+  // 10 件のレコードと、長いメッセージ（200 文字で切られる）を全部の項目に
+  const rec = JSON.parse(RECORD_900);
+  for (let id = 2; id <= 10; id++) writeFileSync(path.join(root, "records", `900-${id}.json`), JSON.stringify({ ...rec, id, record: { ...rec.record, $id: { type: "__ID__", value: String(id) } } }));
+  writeFileSync(path.join(root, "records", "900-11.json"), JSON.stringify({ ...rec, appId: 901, id: 11 }));
+  const long = `"${"長い文".repeat(80)}"`;
+  const infos = ["氏名", "金額", "区分", "備考", "時刻", "参照", "担当"].map((code) => ({ fieldcode: code, state: true, condInfos: [{ state: true, condSet: "1", jaSet: long }] }));
+  const s = await connectClaudeCode([root]);
+  try {
+    assert.equal(sc(await s.call("fv_save_settings", { workspaceId: root, path: P, content: envelope(infos), expectedAbsent: true })).status, "ok");
+    const def = sc(await s.call("fv_check", { workspaceId: root, path: P, records: [1] }));
+    assert.equal(def.status, "ok", JSON.stringify(def));
+    assert.match(def.result.contextLine, /イベント app\.record\.index\.edit\.change、/);
+    assert.equal((await s.call("fv_check", { workspaceId: root, path: P, records: [1], events: ["app.record.detail.show"] })).isError, true, "詳細画面は模擬しない");
+    const other = sc(await s.call("fv_check", { workspaceId: root, path: P, records: [11] }));
+    assert.equal(other.status, "invalid", JSON.stringify(other));
+    assert.match(other.error.message, /アプリ 901 のもの/);
+
+    const events = ["app.record.create.show", "app.record.create.submit", "app.record.edit.show", "app.record.edit.submit", "app.record.index.edit.submit", "mobile.app.record.edit.submit"];
+    const big = await s.call("fv_check", { workspaceId: root, path: P, records: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], events, all: true });
+    const r = sc(big);
+    assert.equal(r.status, "ok", JSON.stringify(r).slice(0, 300));
+    assert.ok(Buffer.byteLength(JSON.stringify(r), "utf8") <= 64 * 1024, "応答は 64 KiB まで");
+    assert.ok(r.findings.some((f) => f.rule === "truncated"));
+    assert.ok(r.result.records.some((x) => x.events.some((e) => e.linesOmitted > 0)), "行を打ち切った数を返す");
+    assert.ok(r.result.records.flatMap((x) => x.events.flatMap((e) => e.lines.flatMap((l) => l.errors))).every((m) => m.length <= 200 || (/^.{200}…（\d+ 文字）$/su.test(m))), "誤りの文は 200 文字で切る（…（N 文字）を添える）");
+  } finally {
+    await s.close();
+  }
+  // 計算式プラグインの zip が無くても、要約と差は動く（fml_summary / fml_diff と同じ）
+  const noZip = await connectClaudeCode([root], {});
+  try {
+    const sum = sc(await noZip.call("fv_summary", { workspaceId: root, path: P }));
+    assert.equal(sum.status, "ok", JSON.stringify(sum));
+    const d = sc(await noZip.call("fv_diff", { workspaceId: root, before: P, after: P }));
+    assert.deepEqual([d.status, d.result.changed], ["ok", []]);
+    const norm = sc(await noZip.call("fv_normalize", { workspaceId: root, path: P }));
+    assert.equal(norm.status, "failed", "検査は zip が要る");
+  } finally {
+    await noZip.close();
+    rmSync(root, { recursive: true, force: true });
+  }
+});

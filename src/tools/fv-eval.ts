@@ -86,7 +86,7 @@ export function registerFvCheck(server: McpServer, ctx: ServerContext): void {
           path: z.string().min(1).max(512).describe("設定 JSON のファイル（作業フォルダーからの相対パス）"),
           records: z.array(z.number().int().positive()).min(1).max(FV_MAX_RECORDS).describe(`レコード番号（fml_record で取ったもの。1〜${FV_MAX_RECORDS} 件）`),
           app: z.number().int().positive().optional().describe("アプリの番号（アプリのフォルダー kintone/… の中の設定なら省略する。settings/ の設定は封筒の appId）"),
-          events: z.array(z.string().regex(FV_EVENT_RE)).min(1).max(FV_CHECK_EVENTS_MAX).optional().describe(`イベント名（${FV_CHECK_EVENTS_MAX} つまで。既定は app.record.edit.submit。例 app.record.create.show、app.record.edit.change.<項目コード>、app.record.create.submit、app.record.index.edit.submit。mobile. を前に付けられる）`),
+          events: z.array(z.string().regex(FV_EVENT_RE)).min(1).max(FV_CHECK_EVENTS_MAX).optional().describe(`イベント名（${FV_CHECK_EVENTS_MAX} つまで。省くと app.record.index.edit.change（一覧編集向けの判定と同じ。初期化 = 保存の前に入れる値は …submit のときだけ出るので、初期化を確かめるなら app.record.edit.submit などを渡す）。例 app.record.create.show、app.record.edit.change.<項目コード>、app.record.create.submit、app.record.index.edit.submit。mobile. を前に付けられる。詳細画面（detail.show）は模擬しない）`),
           lang: z.enum(["ja", "en", "zh"]).optional().describe("ログインユーザーの言語（検証条件のメッセージの言語。既定 ja）"),
           user: z.string().min(1).max(128).optional().describe("ログインユーザーのコード（ユーザー情報のテストデータに居ること。LOGIN_* や UINFO を使う式のとき）"),
           all: z.boolean().optional().describe("印の無い項目の行も返す"),
