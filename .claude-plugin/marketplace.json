@@ -8,7 +8,7 @@
   "plugins": [
     {
       "name": "formula",
-      "description": "kintone の計算式プラグイン（rex0220 formula）の設定 JSON を、検査（normalize）と模擬の計算（calc）を通して作業フォルダーに保存・確認する（formula MCP と、作業フォルダーの結び付け・設定ファイルへの直接の書き込みを止めるフック）",
+      "description": "kintone の計算式プラグイン（rex0220 formula）と項目検証プラグイン（rex0220 field validation）の設定 JSON を、検査と模擬の計算・判定を通して作業フォルダーに保存・確認する（formula MCP と、作業フォルダーの結び付け・設定ファイルへの直接の書き込みを止めるフック）",
       "author": {
         "name": "rex0220"
       },
@@ -23,8 +23,8 @@
       ],
       "source": {
         "source": "archive",
-        "url": "https://github.com/rex0220/formula-authoring-mcp/releases/download/v0.3.7/formula-plugin-0.3.7.zip",
-        "sha256": "1a662eb0bbd2528ac2e9960287e52e372ff48be2bb1cc4e6839565523728463f"
+        "url": "https://github.com/rex0220/formula-authoring-mcp/releases/download/v0.4.0/formula-plugin-0.4.0.zip",
+        "sha256": "f37a9729a8eac9ce1bd03bd7579e8e6c420f39cafee1369c2a99aed21b69aed3"
       }
     }
   ]
