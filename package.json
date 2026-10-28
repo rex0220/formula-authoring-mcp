@@ -21,7 +21,7 @@
   "devDependencies": {
     "@modelcontextprotocol/client": "2.0.0",
     "@modelcontextprotocol/server": "2.0.0",
-    "@rex0220/formula-authoring-tools": "0.4.1",
+    "@rex0220/formula-authoring-tools": "0.6.0",
     "@types/node": "24.19.1",
     "esbuild": "0.28.2",
     "typescript": "7.0.2",

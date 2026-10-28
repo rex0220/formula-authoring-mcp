@@ -93,7 +93,7 @@ kSQL の `ksql.config.json` と同じ形のファイル。**kSQL のファイル
 
 隣に `formula`（計算式プラグインの zip `dist/formula-plugin101.zip`。試験だけ。`FORMULA_TEST_PLUGIN_ZIP` で別の場所を指せる）があること。
 
-中核は npm の `@rex0220/formula-authoring-tools` 0.2.0（lockfile で固定。`compat.json` の `coreVersion` は `>=0.2.0 <0.3.0`、`coreApiVersion` は 2）。公開前の中核で試すときは、隣の formula-authoring の `tools` で `npm pack` した tarball を `npm install --no-save <tgz>` で入れる（`package.json` と lockfile は変えない）。
+中核は npm の `@rex0220/formula-authoring-tools` 0.6.0（lockfile で固定。`compat.json` の `coreVersion` は `>=0.6.0 <0.7.0`、`coreApiVersion` は 2）。公開前の中核で試すときは、隣の formula-authoring の `tools` で `npm pack` した tarball を `npm install --no-save <tgz>` で入れる（`package.json` と lockfile は変えない）。
 
 ```sh
 npm ci
