@@ -2,7 +2,7 @@
 
 formula MCP（Claude Desktop の拡張機能「計算式 設定オーサリング（Formula）」と、Claude Code のプラグイン `formula`）の、利用者に見える変更です。新しい版が上です。
 
-## 0.4.0（未リリース）
+## 0.4.0（2026-10-28）
 
 中核は 0.6.0。資料はテンプレート formula-authoring a79b643。
 
